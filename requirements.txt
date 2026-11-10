@@ -1,3 +1,5 @@
 google-genai
 pydantic>=2,<3
 python-dotenv
+streamlit
+httpx

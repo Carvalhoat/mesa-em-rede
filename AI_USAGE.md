@@ -65,3 +65,30 @@ de quatro tentativas por chamada para lidar com falhas temporárias.
 
 Os resultados verificam as regras do prompt nesses seis exemplos
 sintéticos. A avaliação com mensagens adicionais continua pendente.
+
+
+## Interface de triagem em Streamlit
+
+Usei o agente do Cursor para implementar a interface e compartilhar
+a lógica de extração entre a aplicação e o script de teste.
+
+Revisei o funcionamento executando testes manuais no navegador.
+
+### Verificações realizadas
+
+- Extração de uma mensagem completa.
+- Correção manual da quantidade e confirmação do resumo.
+- Invalidação da confirmação quando os campos da revisão mudam.
+- Identificação de horário ausente e preenchimento manual.
+- Bloqueio de horário inválido.
+- Bloqueio da confirmação quando a mensagem original muda.
+
+Após a reorganização do código, os seis casos sintéticos
+de extração passaram novamente.
+
+A aplicação funciona localmente. Os dados revisados permanecem
+apenas na sessão e ainda não são enviados a outro sistema.
+
+Na revisão do código, identifiquei e corrigi uma falha na validação
+de caracteres como ² no campo de quantidade. O teste manual confirmou
+a rejeição com uma mensagem de orientação, sem interromper a tela.

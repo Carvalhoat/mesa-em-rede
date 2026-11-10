@@ -28,12 +28,16 @@ compatíveis para avaliação pela pessoa responsável.
 
 ## Status
 
-Em desenvolvimento. Identidade visual definida e extração de dados
-implementada com gemini-3.5-flash-lite e revisão humana prevista.
+Em desenvolvimento. A interface local em Streamlit permite
+analisar mensagens com IA, corrigir campos e confirmar a revisão.
 
-Os seis exemplos sintéticos passaram na execução registrada.
-A próxima etapa é criar a interface de triagem para analisar
-mensagens e revisar os campos extraídos.
+Os seis casos sintéticos de extração passaram após a integração
+da interface. Também foram verificados manualmente os fluxos
+de correção, complementação e bloqueio de dados inválidos
+ou desatualizados.
+
+A próxima etapa é consultar organizações fictícias compatíveis
+com a oferta revisada.
 
 ## Escopo inicial
 
@@ -50,3 +54,23 @@ O briefing e os arquivos da marca estão na pasta `brand`.
 ## Autoria
 
 Amanda Carvalho Teixeira.
+
+## Como executar no Windows
+
+1. Instale o Python e abra um terminal na pasta do projeto.
+2. Crie o ambiente virtual:
+
+   `py -m venv .venv`
+
+3. Instale as dependências:
+
+   `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`
+
+4. Copie `.env.example` para `.env` e preencha `GEMINI_API_KEY`.
+5. Inicie a aplicação:
+
+   `.\.venv\Scripts\python.exe -m streamlit run app.py`
+
+Para executar os seis casos sintéticos:
+
+`.\.venv\Scripts\python.exe teste_extracao.py`
