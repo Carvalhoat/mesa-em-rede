@@ -1,0 +1,25 @@
+[
+    {
+      "id": "mensagem_completa",
+      "mensagem": "Temos 25 unidades de pão na Vila Mariana. A retirada é dia 12/11/2026, das 9h às 10h.",
+      "esperado": {
+        "item": "pão",
+        "quantidade": 25,
+        "bairro": "Vila Mariana",
+        "data_retirada": "2026-11-12",
+        "horario_retirada": "09:00-10:00"
+      }
+    },
+    {
+      "id": "mensagem_sem_horario",
+      "mensagem": "Temos 25 unidades de pão na Vila Mariana. A retirada é dia 12/11/2026.",
+      "esperado": {
+        "item": "pão",
+        "quantidade": 25,
+        "bairro": "Vila Mariana",
+        "data_retirada": "2026-11-12",
+        "horario_retirada": null
+      }
+    }
+  ]
+  

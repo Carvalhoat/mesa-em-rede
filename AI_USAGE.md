@@ -23,3 +23,23 @@ e orientar sua edição no Cursor.
 
 Usar a API do Gemini para extrair dados de mensagens fictícias
 e comparar as respostas com um gabarito definido manualmente.
+
+
+## Primeiro teste de extração
+
+- Data: 10/11/2026.
+- Modelo utilizado: gemini-3.5-flash-lite.
+- Prompt: prompts/extracao_v1.md.
+- Dados fictícios: data/exemplos.json.
+- Execução: teste_extracao.py.
+- Resultado: 2 de 2 casos passaram.
+
+Na mensagem completa, os cinco campos corresponderam ao gabarito.
+Na mensagem sem horário, o modelo retornou null nesse campo
+e o código identificou horario_retirada como pendência.
+
+Durante a execução, ocorreu um erro 503 de indisponibilidade
+temporária. Uma execução posterior concluiu os dois casos.
+
+Este teste verifica o funcionamento inicial. A avaliação com
+mensagens variadas será realizada na próxima etapa.
