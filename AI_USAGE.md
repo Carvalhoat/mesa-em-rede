@@ -43,3 +43,25 @@ temporária. Uma execução posterior concluiu os dois casos.
 
 Este teste verifica o funcionamento inicial. A avaliação com
 mensagens variadas será realizada na próxima etapa.
+
+
+## Ampliação do teste de extração
+
+- Data: 10/11/2026.
+- Modelo: gemini-3.5-flash-lite.
+- Prompt: prompts/extracao_v1.md.
+- Resultado observado: 6 de 6 casos passaram em uma execução completa.
+
+Foram verificados os seguintes cenários:
+- Mensagem completa.
+- Horário ausente.
+- Quantidade aproximada.
+- Data relativa.
+- Horário com apenas um limite.
+- Quantidades contraditórias.
+
+Configurei tentativas automáticas com espera crescente e limite
+de quatro tentativas por chamada para lidar com falhas temporárias.
+
+Os resultados verificam as regras do prompt nesses seis exemplos
+sintéticos. A avaliação com mensagens adicionais continua pendente.

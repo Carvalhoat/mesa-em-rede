@@ -28,11 +28,12 @@ compatíveis para avaliação pela pessoa responsável.
 
 ## Status
 
-Em desenvolvimento. Identidade visual definida e primeiro teste
-de extração concluído com gemini-3.5-flash-lite.
+Em desenvolvimento. Identidade visual definida e extração de dados
+implementada com gemini-3.5-flash-lite e revisão humana prevista.
 
-Os dois casos iniciais passaram. A próxima etapa é ampliar os
-testes para mensagens incompletas, ambíguas e contraditórias.
+Os seis exemplos sintéticos passaram na execução registrada.
+A próxima etapa é criar a interface de triagem para analisar
+mensagens e revisar os campos extraídos.
 
 ## Escopo inicial
 

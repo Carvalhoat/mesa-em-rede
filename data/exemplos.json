@@ -20,6 +20,50 @@
         "data_retirada": "2026-11-12",
         "horario_retirada": null
       }
+    },
+    {
+      "id": "quantidade_aproximada",
+      "mensagem": "Temos cerca de 20 unidades de pão na Vila Mariana. A retirada é dia 12/11/2026, das 9h às 10h.",
+      "esperado": {
+        "item": "pão",
+        "quantidade": null,
+        "bairro": "Vila Mariana",
+        "data_retirada": "2026-11-12",
+        "horario_retirada": "09:00-10:00"
+      }
+    },
+    {
+      "id": "data_relativa",
+      "mensagem": "Temos 25 unidades de pão na Vila Mariana. A retirada é amanhã, das 9h às 10h.",
+      "esperado": {
+        "item": "pão",
+        "quantidade": 25,
+        "bairro": "Vila Mariana",
+        "data_retirada": null,
+        "horario_retirada": "09:00-10:00"
+      }
+    },
+    {
+      "id": "horario_apenas_com_limite",
+      "mensagem": "Temos 25 unidades de pão na Vila Mariana. A retirada é dia 12/11/2026, até as 10h.",
+      "esperado": {
+        "item": "pão",
+        "quantidade": 25,
+        "bairro": "Vila Mariana",
+        "data_retirada": "2026-11-12",
+        "horario_retirada": null
+      }
+    },
+    {
+      "id": "quantidade_contraditoria",
+      "mensagem": "Temos 20 ou 30 unidades de pão, ainda não confirmamos a contagem. Estamos na Vila Mariana. A retirada é dia 12/11/2026, das 9h às 10h.",
+      "esperado": {
+        "item": "pão",
+        "quantidade": null,
+        "bairro": "Vila Mariana",
+        "data_retirada": "2026-11-12",
+        "horario_retirada": "09:00-10:00"
+      }
     }
   ]
   

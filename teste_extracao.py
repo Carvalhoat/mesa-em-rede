@@ -38,7 +38,18 @@ def main() -> None:
         )
     )
 
-    client = genai.Client(api_key=chave)
+    client = genai.Client(
+    api_key=chave,
+    http_options=types.HttpOptions(
+        timeout=60000,
+        retry_options=types.HttpRetryOptions(
+            attempts=4,
+            initial_delay=5,
+            max_delay=30,
+            exp_base=2,
+        ),
+    ),
+)
     total_aprovados = 0
 
     for caso in exemplos:
@@ -86,4 +97,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    
