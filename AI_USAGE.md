@@ -92,3 +92,16 @@ apenas na sessão e ainda não são enviados a outro sistema.
 Na revisão do código, identifiquei e corrigi uma falha na validação
 de caracteres como ² no campo de quantidade. O teste manual confirmou
 a rejeição com uma mensagem de orientação, sem interromper a tela.
+
+
+## Evolução visual com personagens
+
+Desenvolvi os personagens com apoio do ChatGPT, Gemini e Recraft.
+Os SVGs foram ajustados e os PNGs exportados com transparência.
+
+A interface recebeu cabeçalho transparente, etapas visíveis,
+botão para carregar um exemplo e ilustrações associadas à revisão
+e à confirmação da oferta.
+
+Verifiquei localmente a análise e a confirmação de uma oferta
+completa na nova interface.

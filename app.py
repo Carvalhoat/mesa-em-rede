@@ -1,4 +1,7 @@
 import re
+import base64
+from html import escape
+from datetime import timedelta
 from datetime import date
 from pathlib import Path
 
@@ -8,7 +11,7 @@ from extracao import ErroExtracao, extrair_oferta
 
 
 PASTA = Path(__file__).resolve().parent
-LOGO = PASTA / "brand" / "logo-horizontal.png"
+ILUSTRACOES = PASTA / "brand" / "exportacoes"
 
 CAMPOS = (
     ("item", "Item"),
@@ -140,25 +143,6 @@ def garantir_estado() -> None:
     st.session_state.setdefault("revisao_conferida", None)
 
 
-def aplicar_estilo() -> None:
-    st.markdown(
-        """
-        <style>
-        h1, h2, h3 { color: #234539; }
-        .faixa-ficticia {
-            border-left: 4px solid #AD4D35;
-            background: #FFFFFF;
-            color: #26332D;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin: 0.25rem 0 1rem 0;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def analisar_mensagem(texto: str) -> None:
     try:
         with st.spinner("Analisando a mensagem..."):
@@ -200,137 +184,270 @@ def confirmar_revisao() -> None:
     st.session_state.resumo = revisado
 
 
-def exibir_valores(valores: dict[str, str | int | None]) -> None:
-    for campo, nome in CAMPOS:
-        st.write(f"**{nome}:** {valor_exibicao(valores.get(campo))}")
+# Os personagens são arquivos locais aprovados no desenvolvimento da marca.
+def imagem_personagem(nome: str, descricao: str, largura: int) -> None:
+    caminho = ILUSTRACOES / nome
+    if caminho.is_file():
+        conteudo = base64.b64encode(caminho.read_bytes()).decode("ascii")
+        st.markdown(
+            f'<div class="personagem"><img src="data:image/png;base64,{conteudo}" '
+            f'alt="{escape(descricao, quote=True)}" width="{largura}" /></div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.caption(f"Ilustração indisponível: {nome}")
 
 
-def main() -> None:
-    st.set_page_config(
-        page_title="Triagem de excedentes",
-        page_icon=str(LOGO),
-        layout="centered",
-    )
-    aplicar_estilo()
-    garantir_estado()
-
-    st.image(str(LOGO), width=480)
-    st.title("Triagem de excedentes")
+def aplicar_estilo() -> None:
     st.markdown(
         """
-        <div class="faixa-ficticia">
-        Esta demonstração usa dados fictícios.
-        A revisão confirmada permanece apenas nesta sessão do navegador:
-        ela não é gravada em arquivo nem enviada a outro sistema.
-        </div>
+        <style>
+        .stApp { background: #FFF7EB; }
+        .block-container { max-width: 1160px; padding-top: 2.1rem; padding-bottom: 2rem; }
+        h1, h2, h3 { color: #234539; letter-spacing: -0.035em; }
+        h1 { font-size: clamp(2.2rem, 4vw, 3.4rem) !important; line-height: 1.08 !important; }
+        h2 { font-size: 1.65rem !important; }
+        h3 { font-size: 1.2rem !important; }
+        p { line-height: 1.65; }
+        .marca { display: flex; align-items: center; gap: 12px; color: #234539; }
+        .marca-nome { font-weight: 800; font-size: 1.3rem; letter-spacing: -.04em; }
+        .marca-sub { font-size: .7rem; color: #65766d; letter-spacing: .01em; }
+        .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.6rem; gap: 16px; }
+        .selo { border: 1px solid #dcded2; color: #456052; border-radius: 30px; padding: 7px 13px; font-size: .75rem; white-space: nowrap; }
+        .sobrelinha { color: #AD4D35; font-size: .72rem; font-weight: 800; letter-spacing: .12em; margin-bottom: .7rem; }
+        .apoio { color: #53665c; max-width: 510px; font-size: 1rem; }
+        .nota-demo { color: #53665c; font-size: .8rem; border-top: 1px solid #e7dfd0; padding: 12px 0; margin-bottom: 10px; }
+        .etapas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 5px 0 20px; }
+        .etapa { display: flex; gap: 10px; align-items: center; border: 1px solid #e3dece; border-radius: 14px; padding: 13px; background: #ffffff88; }
+        .etapa.ativa { background: #234539; border-color: #234539; color: white; }
+        .etapa-num { width: 27px; height: 27px; flex: 0 0 27px; border-radius: 50%; border: 1px solid currentColor; display: grid; place-items: center; font-size: .8rem; }
+        .etapa strong { display:block; font-size: .83rem; }
+        .etapa small { font-size: .7rem; opacity: .8; }
+        .etapa.futura { color: #6c776f; }
+        .personagem { display: flex; align-items: center; justify-content: center; }
+        .personagem img { max-width: 100%; height: auto; }
+        div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 20px; }
+        .st-key-entrada, .st-key-dados, .st-key-revisao, .st-key-resumo, .st-key-proximo { background: #FFFFFF; border-radius: 20px; }
+        div[data-testid="stTextArea"] textarea, div[data-testid="stTextInput"] input { border-radius: 10px; }
+        div.stButton > button { border-radius: 10px; min-height: 42px; font-weight: 650; }
+        .rede { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; font-size:.73rem; color:#65766d; padding-top:24px; }
+        .rede i { background:#AD4D35; width:6px; height:6px; border-radius:50%; display:inline-block; }
+        @media (max-width: 640px) {
+            .block-container { padding-top: 1.4rem; padding-left: 1rem; padding-right: 1rem; }
+            .etapas { gap: 6px; }
+            .etapa { flex-direction: column; align-items: flex-start; padding: 10px; gap: 7px; }
+            .etapa strong { font-size: .72rem; }
+            .etapa small { font-size: .65rem; }
+            .selo { display:none; }
+        }
+        </style>
         """,
         unsafe_allow_html=True,
     )
 
-    st.text_area(
-        "Mensagem do restaurante",
-        key="mensagem",
-        height=140,
+
+def carregar_exemplo() -> None:
+    dia = (date.today() + timedelta(days=2)).strftime("%d/%m/%Y")
+    st.session_state.mensagem = (
+        "Temos 25 unidades de pão na Vila Mariana. "
+        f"A retirada é dia {dia}, das 9h às 10h."
+    )
+    st.session_state.erro = None
+
+
+def exibir_valores(valores: dict[str, str | int | None]) -> None:
+    for campo, nome in CAMPOS:
+        st.caption(nome)
+        st.text(valor_exibicao(valores.get(campo)))
+
+
+def exibir_etapas(ativa: int, completa: bool) -> None:
+    estados = (
+        ("Informar excedente", "Mensagem do restaurante"),
+        ("Revisar oferta", "Revisão concluída" if completa else "Conferência humana"),
+        ("Consultar organizações", "Em breve"),
+    )
+    partes = ['<div class="etapas">']
+    for indice, (titulo, apoio) in enumerate(estados):
+        classe = "ativa" if indice == ativa else ""
+        if indice == 2:
+            classe = "futura"
+        partes.append(
+            f'<div class="etapa {classe}"><span class="etapa-num">{indice + 1}</span>'
+            f'<div><strong>{titulo}</strong><small>{apoio}</small></div></div>'
+        )
+    partes.append("</div>")
+    st.markdown("".join(partes), unsafe_allow_html=True)
+
+
+def main() -> None:
+    st.set_page_config(page_title="Mesa em Rede · Triagem", page_icon="🍽️", layout="wide")
+    aplicar_estilo()
+    garantir_estado()
+
+    # O símbolo é HTML/SVG estático, com fundo transparente.
+    st.markdown(
+        """
+        <div class="topo"><div class="marca">
+        <svg width="44" height="44" viewBox="0 0 80 80" aria-hidden="true">
+          <g fill="none" stroke="#234539" stroke-width="2.7">
+            <circle cx="40" cy="40" r="36"/><circle cx="40" cy="40" r="27"/>
+            <path d="M18 55 L40 14 L62 55"/>
+          </g>
+          <g fill="#AD4D35"><circle cx="40" cy="14" r="4.5"/>
+          <circle cx="18" cy="55" r="4.5"/><circle cx="62" cy="55" r="4.5"/></g>
+        </svg>
+        <div><div class="marca-nome">Mesa em Rede</div>
+        <div class="marca-sub">Conectando excedentes alimentares a quem pode recebê-los.</div></div></div>
+        <span class="selo">Protótipo · revisão humana</span></div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    if st.button("Analisar mensagem", type="primary"):
-        texto = str(st.session_state.get("mensagem", "")).strip()
-        if not texto:
-            st.warning("Escreva a mensagem do restaurante antes de analisar.")
-        else:
-            analisar_mensagem(texto)
+    texto, personagem = st.columns([2.5, 1], vertical_alignment="center")
+    with texto:
+        st.markdown('<div class="sobrelinha">DO EXCEDENTE À POSSIBILIDADE</div>', unsafe_allow_html=True)
+        st.title("Um excedente pode encontrar uma nova mesa.")
+        st.markdown(
+            '<p class="apoio">Organize a oferta com apoio da IA e confira cada '
+            'informação antes de seguir para o encaminhamento.</p>',
+            unsafe_allow_html=True,
+        )
+    with personagem:
+        imagem_personagem("pratinho-boas-vindas-final.png", "Pratinho acenando em boas-vindas", 210)
+    st.markdown(
+        '<div class="nota-demo">Demonstração com dados fictícios · '
+        'A revisão fica apenas nesta sessão e é descartada ao recarregar a página.</div>',
+        unsafe_allow_html=True,
+    )
 
-    if st.session_state.erro:
-        st.error(st.session_state.erro)
+    etapas = st.empty()
+    with st.container(border=True, key="entrada"):
+        titulo, exemplo = st.columns([3, 1])
+        with titulo:
+            st.subheader("1. Conte o que está disponível")
+        with exemplo:
+            st.button("Usar exemplo", on_click=carregar_exemplo, use_container_width=True)
+        st.caption("Informe alimento, quantidade, bairro, data e intervalo para retirada. Vamos identificar o que faltar.")
+        st.text_area(
+            "Mensagem do restaurante", key="mensagem", height=125,
+            placeholder="Ex.: temos 25 unidades de pão na Vila Mariana…",
+        )
+        if st.button("Analisar mensagem", type="primary"):
+            atual = str(st.session_state.get("mensagem", "")).strip()
+            if atual:
+                analisar_mensagem(atual)
+            else:
+                st.warning("Escreva a mensagem do restaurante antes de analisar.")
+        if st.session_state.erro:
+            st.error(st.session_state.erro)
 
     oferta = st.session_state.oferta
-    if oferta is None:
-        return
-
     texto_atual = str(st.session_state.get("mensagem", "")).strip()
     mensagem_mudou = texto_atual != st.session_state.mensagem_analisada
-
-    st.subheader("Mensagem analisada")
-    st.write(st.session_state.mensagem_analisada)
-
-    st.subheader("Campos extraídos")
-    exibir_valores(oferta)
-    pendencias_extracao = nomes_pendentes(oferta)
-    if pendencias_extracao:
-        st.warning(
-            "Pendências da extração: "
-            + juntar_nomes(pendencias_extracao)
-            + "."
-        )
-    else:
-        st.success("A extração não deixou pendências.")
-
-    st.subheader("Revisão")
-    st.caption(
-        "Ajuste o que precisar. Campos em branco continuam como informações "
-        "ausentes e não são preenchidos automaticamente."
-    )
-    st.text_input("Item", key="rev_item")
-    st.text_input(
-        "Quantidade",
-        key="rev_quantidade",
-        help="Número inteiro positivo. Deixe em branco se a quantidade seguir ausente.",
-    )
-    st.text_input("Bairro", key="rev_bairro")
-    st.text_input(
-        "Data de retirada",
-        key="rev_data",
-        help="Formato AAAA-MM-DD. Deixe em branco se a data seguir ausente.",
-    )
-    st.text_input(
-        "Horário de retirada",
-        key="rev_horario",
-        help="Intervalo HH:MM-HH:MM, em 24 horas. Deixe em branco se o horário seguir ausente.",
-    )
-
-    if mensagem_mudou:
-        st.warning(
-            "A mensagem foi alterada e exige uma nova análise. "
-            "A confirmação fica bloqueada até que o texto atual seja analisado. "
-            "O resultado anterior não vale para o texto novo."
-        )
-    elif st.button("Confirmar revisão"):
-        confirmar_revisao()
-
-    revisao_atual = ler_revisao()
-    conferencia_atual = (
-        st.session_state.revisao_conferida == revisao_atual
+    resumo_valido = (
+        st.session_state.resumo is not None
         and not mensagem_mudou
+        and st.session_state.revisao_conferida == ler_revisao()
     )
-    if conferencia_atual:
-        for mensagem_erro in st.session_state.erros_revisao:
-            st.error(mensagem_erro)
+    completa = resumo_valido and not nomes_pendentes(st.session_state.resumo)
 
-    resumo = st.session_state.resumo
-    if (
-        resumo is None
-        or mensagem_mudou
-        or st.session_state.revisao_conferida != revisao_atual
-    ):
-        if resumo is not None and not mensagem_mudou:
-            st.info(
-                "Os campos da revisão mudaram. "
-                "Confirme novamente para atualizar o resumo desta sessão."
-            )
-        return
+    if oferta is not None:
+        if mensagem_mudou:
+            st.warning("A mensagem mudou. Clique em Analisar mensagem para atualizar os dados. A confirmação está bloqueada.")
+        original, revisao = st.columns([1, 1.35], gap="large")
+        with original:
+            with st.container(border=True, key="dados"):
+                st.subheader("O que a IA identificou")
+                st.caption("Dados extraídos da mensagem analisada, antes das suas correções.")
+                with st.expander("Ver mensagem analisada"):
+                    st.text(st.session_state.mensagem_analisada)
+                exibir_valores(oferta)
+                pendentes = nomes_pendentes(oferta)
+                if pendentes:
+                    st.warning("Falta informar: " + juntar_nomes(pendentes) + ".")
+                else:
+                    st.success("Os cinco campos foram preenchidos pela extração.")
+        with revisao:
+            with st.container(border=True, key="revisao"):
+                cabecalho, ilustra = st.columns([3, 1])
+                with cabecalho:
+                    st.subheader("2. Confira a oferta")
+                    st.caption("Corrija o que precisar. Campos vazios continuam como pendências.")
+                with ilustra:
+                    imagem_personagem("pratinho-revisao-final.png", "Pratinho conferindo uma oferta", 95)
+                st.text_input("Item", key="rev_item")
+                quantidade, bairro = st.columns([1, 2])
+                with quantidade:
+                    st.text_input("Quantidade", key="rev_quantidade", help="Número inteiro positivo, em unidades.")
+                with bairro:
+                    st.text_input("Bairro", key="rev_bairro")
+                data_col, hora_col = st.columns(2)
+                with data_col:
+                    st.text_input("Data de retirada", key="rev_data", help="Formato AAAA-MM-DD. Ex.: 2026-11-12.")
+                with hora_col:
+                    st.text_input("Horário de retirada", key="rev_horario", help="Formato HH:MM-HH:MM. Ex.: 09:00-10:00.")
+                pendentes_revisao = nomes_pendentes({k: v.strip() for k, v in ler_revisao().items()})
+                if pendentes_revisao:
+                    st.caption("Complete quando possível: " + juntar_nomes(pendentes_revisao) + ".")
+                if st.button("Confirmar revisão", type="primary", disabled=mensagem_mudou):
+                    confirmar_revisao()
+                conferencia_atual = (
+                    st.session_state.revisao_conferida == ler_revisao()
+                    and not mensagem_mudou
+                )
+                if conferencia_atual:
+                    for erro in st.session_state.erros_revisao:
+                        st.error(erro)
 
-    st.subheader("Resumo revisado")
-    exibir_valores(resumo)
-    pendencias = nomes_pendentes(resumo)
-    if pendencias:
-        st.warning(
-            "Ainda há pendências: " + juntar_nomes(pendencias) + "."
+        resumo = st.session_state.resumo
+        resumo_valido = (
+            resumo is not None and not mensagem_mudou
+            and st.session_state.revisao_conferida == ler_revisao()
         )
-    else:
-        st.success("A revisão não tem pendências.")
-    st.caption(
-        "Este resumo existe somente nesta sessão. "
-        "Atualizar ou fechar a página descarta a revisão."
+        completa = resumo_valido and not nomes_pendentes(resumo)
+        if resumo_valido:
+            with st.container(border=True, key="resumo"):
+                info, ilustra = st.columns([3, 1], vertical_alignment="center")
+                with info:
+                    st.subheader("Oferta revisada" if completa else "Revisão com pendências")
+                    st.caption("Resumo confirmado por você · disponível nesta sessão")
+                    campos = st.columns(2)
+                    with campos[0]:
+                        for campo, rotulo in CAMPOS[:3]:
+                            st.caption(rotulo)
+                            st.text(valor_exibicao(resumo.get(campo)))
+                    with campos[1]:
+                        for campo, rotulo in CAMPOS[3:]:
+                            st.caption(rotulo)
+                            st.text(valor_exibicao(resumo.get(campo)))
+                with ilustra:
+                    imagem_personagem(
+                        "pratinho-alimentos-final.png" if completa else "pratinho-revisao-final.png",
+                        "Pratinho com uma caixa de alimentos" if completa else "Pratinho revisando dados pendentes", 160,
+                    )
+                if completa:
+                    st.success("A revisão não tem pendências.")
+                else:
+                    st.warning("Ainda há pendências: " + juntar_nomes(nomes_pendentes(resumo)) + ".")
+            if completa:
+                with st.container(border=True, key="proximo"):
+                    informacao, ilustra = st.columns([4, 1], vertical_alignment="center")
+                    with informacao:
+                        st.subheader("O próximo elo da rede")
+                        st.write("A próxima etapa será consultar organizações receptoras compatíveis com a oferta revisada.")
+                        st.button("Consultar organizações · em breve", disabled=True)
+                    with ilustra:
+                        imagem_personagem("caminhao-retirada-final.png", "Ilustração da futura etapa de retirada", 140)
+        elif resumo is not None and not mensagem_mudou:
+            st.info("Os campos da revisão mudaram. Confirme novamente para atualizar o resumo desta sessão.")
+
+    with etapas.container():
+        exibir_etapas(0 if oferta is None or mensagem_mudou else 1, completa)
+    st.markdown(
+        '<div class="rede"><span>Restaurante</span><i></i><span>Triagem humana</span>'
+        '<i></i><span>Organização receptora</span></div>',
+        unsafe_allow_html=True,
     )
 
 
