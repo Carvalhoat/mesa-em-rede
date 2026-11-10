@@ -8,6 +8,7 @@ from pathlib import Path
 import streamlit as st
 
 from extracao import ErroExtracao, extrair_oferta
+from organizacoes import consultar_organizacoes
 
 
 PASTA = Path(__file__).resolve().parent
@@ -141,6 +142,7 @@ def garantir_estado() -> None:
     st.session_state.setdefault("erro", None)
     st.session_state.setdefault("erros_revisao", [])
     st.session_state.setdefault("revisao_conferida", None)
+    st.session_state.setdefault("consulta", None)
 
 
 def analisar_mensagem(texto: str) -> None:
@@ -174,6 +176,7 @@ def analisar_mensagem(texto: str) -> None:
 
 
 def confirmar_revisao() -> None:
+    st.session_state.consulta = None
     informados = ler_revisao()
     erros, revisado = validar_revisao(informados)
     st.session_state.revisao_conferida = informados
@@ -265,12 +268,12 @@ def exibir_etapas(ativa: int, completa: bool) -> None:
     estados = (
         ("Informar excedente", "Mensagem do restaurante"),
         ("Revisar oferta", "Revisão concluída" if completa else "Conferência humana"),
-        ("Consultar organizações", "Em breve"),
+        ("Consultar organizações", "Consulta concluída" if ativa == 2 else "Compatibilidade da oferta"),
     )
     partes = ['<div class="etapas">']
     for indice, (titulo, apoio) in enumerate(estados):
         classe = "ativa" if indice == ativa else ""
-        if indice == 2:
+        if indice == 2 and not completa:
             classe = "futura"
         partes.append(
             f'<div class="etapa {classe}"><span class="etapa-num">{indice + 1}</span>'
@@ -320,6 +323,13 @@ def main() -> None:
         'A revisão fica apenas nesta sessão e é descartada ao recarregar a página.</div>',
         unsafe_allow_html=True,
     )
+
+    if (
+        st.session_state.oferta is None
+        or str(st.session_state.get("mensagem", "")).strip() != st.session_state.mensagem_analisada
+        or st.session_state.revisao_conferida != ler_revisao()
+    ):
+        st.session_state.consulta = None
 
     etapas = st.empty()
     with st.container(border=True, key="entrada"):
@@ -434,16 +444,67 @@ def main() -> None:
                 with st.container(border=True, key="proximo"):
                     informacao, ilustra = st.columns([4, 1], vertical_alignment="center")
                     with informacao:
-                        st.subheader("O próximo elo da rede")
-                        st.write("A próxima etapa será consultar organizações receptoras compatíveis com a oferta revisada.")
-                        st.button("Consultar organizações · em breve", disabled=True)
+                        st.subheader("3. Encontre o próximo elo da rede")
+                        st.write("Consulte organizações fictícias por alimento, bairro, capacidade e disponibilidade.")
+                        st.caption("A consulta é uma sugestão para avaliação humana. Não envia mensagens nem reserva capacidade.")
+                        if st.button("Consultar organizações", type="primary"):
+                            st.session_state.consulta = None
+                            try:
+                                resultados = consultar_organizacoes(resumo)
+                            except (ValueError, OSError, KeyError, TypeError):
+                                st.error("Não foi possível consultar o cadastro. Confira data/organizacoes.json e os campos da oferta.")
+                            else:
+                                st.session_state.consulta = {
+                                    "oferta": resumo.copy(),
+                                    "mensagem": st.session_state.mensagem_analisada,
+                                    "resultados": resultados,
+                                }
                     with ilustra:
-                        imagem_personagem("caminhao-retirada-final.png", "Ilustração da futura etapa de retirada", 140)
+                        imagem_personagem("caminhao-retirada-final.png", "Ilustração de retirada de alimentos", 140)
+                consulta = st.session_state.consulta
+                consulta_atual = (
+                    consulta is not None
+                    and consulta["oferta"] == resumo
+                    and consulta["mensagem"] == st.session_state.mensagem_analisada
+                )
+                if consulta_atual:
+                    resultados = consulta["resultados"]
+                    compativeis = [r for r in resultados if r["compativel"]]
+                    st.subheader("Resultado da consulta")
+                    st.caption(f"{len(compativeis)} de {len(resultados)} organizações com compatibilidade inicial. Dados de demonstração.")
+                    st.caption("Capacidade por oferta. O cadastro não acompanha a soma de ofertas simultâneas.")
+                    if not compativeis:
+                        st.info("Nenhuma organização do cadastro atende a todos os critérios desta oferta. Consulte os motivos abaixo.")
+                    for resultado in compativeis:
+                        with st.container(border=True):
+                            st.subheader(resultado["nome"])
+                            st.success("Compatibilidade inicial identificada")
+                            for motivo in resultado["motivos"]:
+                                st.write("✓ " + motivo)
+                            st.caption("A organização ainda precisa confirmar interesse, condições de recebimento e retirada.")
+                    outras = [r for r in resultados if not r["compativel"]]
+                    if outras:
+                        with st.expander("Por que as outras organizações não foram sugeridas?"):
+                            for resultado in outras:
+                                st.write("**" + resultado["nome"] + "**")
+                                for motivo in resultado["impedimentos"]:
+                                    st.write("• " + motivo)
         elif resumo is not None and not mensagem_mudou:
             st.info("Os campos da revisão mudaram. Confirme novamente para atualizar o resumo desta sessão.")
 
+    consulta = st.session_state.consulta
+    consulta_atual = (
+        completa and consulta is not None
+        and consulta["oferta"] == st.session_state.resumo
+        and consulta["mensagem"] == st.session_state.mensagem_analisada
+    )
+    if not resumo_valido:
+        st.session_state.consulta = None
+    ativa = 0 if oferta is None or mensagem_mudou else 1
+    if consulta_atual:
+        ativa = 2
     with etapas.container():
-        exibir_etapas(0 if oferta is None or mensagem_mudou else 1, completa)
+        exibir_etapas(ativa, completa)
     st.markdown(
         '<div class="rede"><span>Restaurante</span><i></i><span>Triagem humana</span>'
         '<i></i><span>Organização receptora</span></div>',
