@@ -52,3 +52,39 @@ e os inferiores representam o restaurante e a organização receptora.
 
 Identifique as propostas como rascunhos até a aprovação da Amanda.
 Use a versão aprovada como referência nas próximas peças.
+
+## Personagem aprovado como direção visual
+
+O personagem é um prato de cerâmica com rosto expressivo,
+braços finos, mãos simples e pés arredondados.
+
+A direção visual combina ilustração editorial, formas suaves
+e expressões acolhedoras.
+
+### Cores
+
+- Verde escuro #234539 nos contornos e traços.
+- Creme #FFF7EB no corpo do prato.
+- Terracota #AD4D35 nos três pontos e detalhes.
+- Tons de apoio dos alimentos serão definidos na finalização.
+
+### Elementos recorrentes
+
+- Três pontos no aro representam os participantes da rede.
+- O restaurante informa o excedente.
+- A pessoa responsável pela triagem revisa a oferta.
+- A organização receptora atende as pessoas beneficiadas.
+
+### Poses previstas
+
+1. Boas-vindas.
+2. Revisão com lupa e cartão.
+3. Transporte de uma caixa de alimentos.
+4. Retirada, ao lado do carrinho.
+
+### Regras do desenho
+
+- Manter proporções, rosto, mãos, pés e espessura de traço consistentes.
+- Separar claramente braços, mãos, acessórios e borda do prato.
+- Usar fundo transparente nas peças destinadas à aplicação.
+- Usar o desenho-base aprovado como referência das novas poses.
