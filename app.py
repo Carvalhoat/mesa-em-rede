@@ -206,17 +206,19 @@ def aplicar_estilo() -> None:
         """
         <style>
         .stApp { background: #FFF7EB; }
-        .block-container { max-width: 1160px; padding-top: 2.1rem; padding-bottom: 2rem; }
+        .block-container { max-width: 1160px; padding-top: 5rem; padding-bottom: 2rem; }
         h1, h2, h3 { color: #234539; letter-spacing: -0.035em; }
         h1 { font-size: clamp(2.2rem, 4vw, 3.4rem) !important; line-height: 1.08 !important; }
         h2 { font-size: 1.65rem !important; }
         h3 { font-size: 1.2rem !important; }
         p { line-height: 1.65; }
-        .marca { display: flex; align-items: center; gap: 12px; color: #234539; }
+        .marca { display: flex; align-items: center; gap: 12px; color: #234539; min-width: 0; flex: 1 1 320px; }
+        .marca svg { display: block; flex: 0 0 44px; width: 44px; height: 44px; overflow: visible; }
+        .marca > div { min-width: 0; }
         .marca-nome { font-weight: 800; font-size: 1.3rem; letter-spacing: -.04em; }
-        .marca-sub { font-size: .7rem; color: #65766d; letter-spacing: .01em; }
-        .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.6rem; gap: 16px; }
-        .selo { border: 1px solid #dcded2; color: #456052; border-radius: 30px; padding: 7px 13px; font-size: .75rem; white-space: nowrap; }
+        .marca-sub { font-size: .7rem; color: #65766d; letter-spacing: .01em; overflow-wrap: anywhere; }
+        .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.6rem; gap: 16px; flex-wrap: wrap; width: 100%; box-sizing: border-box; }
+        .selo { border: 1px solid #dcded2; color: #456052; border-radius: 30px; padding: 7px 13px; font-size: .75rem; flex: 0 1 auto; max-width: 100%; box-sizing: border-box; }
         .sobrelinha { color: #AD4D35; font-size: .72rem; font-weight: 800; letter-spacing: .12em; margin-bottom: .7rem; }
         .apoio { color: #53665c; max-width: 510px; font-size: 1rem; }
         .nota-demo { color: #53665c; font-size: .8rem; border-top: 1px solid #e7dfd0; padding: 12px 0; margin-bottom: 10px; }
@@ -236,7 +238,7 @@ def aplicar_estilo() -> None:
         .rede { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; font-size:.73rem; color:#65766d; padding-top:24px; }
         .rede i { background:#AD4D35; width:6px; height:6px; border-radius:50%; display:inline-block; }
         @media (max-width: 640px) {
-            .block-container { padding-top: 1.4rem; padding-left: 1rem; padding-right: 1rem; }
+            .block-container { padding-top: 4.5rem; padding-left: 1rem; padding-right: 1rem; }
             .etapas { gap: 6px; }
             .etapa { flex-direction: column; align-items: flex-start; padding: 10px; gap: 7px; }
             .etapa strong { font-size: .72rem; }
@@ -474,7 +476,18 @@ def main() -> None:
                     st.caption(f"{len(compativeis)} de {len(resultados)} organizações com compatibilidade inicial. Dados de demonstração.")
                     st.caption("Capacidade por oferta. O cadastro não acompanha a soma de ofertas simultâneas.")
                     if not compativeis:
-                        st.info("Nenhuma organização do cadastro atende a todos os critérios desta oferta. Consulte os motivos abaixo.")
+                        with st.container(border=True):
+                            mensagem_vazia, ilustracao_vazia = st.columns([3, 1], vertical_alignment="center")
+                            with mensagem_vazia:
+                                st.markdown("**Ainda não encontramos uma organização compatível.**")
+                                st.write("Nenhuma organização do cadastro atende a todos os critérios desta oferta. Consulte os motivos abaixo.")
+                                st.caption("Confira se os dados da oferta estão corretos. A busca considera apenas as organizações fictícias cadastradas nesta demonstração.")
+                            with ilustracao_vazia:
+                                imagem_personagem(
+                                    "pratinho-sem-compatibilidade-final.png",
+                                    "Pratinho com expressão levemente triste porque não houve compatibilidade na consulta",
+                                    150,
+                                )
                     for resultado in compativeis:
                         with st.container(border=True):
                             st.subheader(resultado["nome"])
