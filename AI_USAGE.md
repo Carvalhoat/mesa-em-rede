@@ -19,10 +19,11 @@ A escolha final da marca foi feita por mim.
 Usei o ChatGPT para preparar o conteúdo inicial do README
 e orientar sua edição no Cursor.
 
-## Próxima aplicação planejada
+## Aplicação da IA na extração
 
-Usar a API do Gemini para extrair dados de mensagens fictícias
-e comparar as respostas com um gabarito definido manualmente.
+Integrei a API do Gemini para extrair dados de mensagens fictícias
+e comparei as respostas com um gabarito definido manualmente.
+Essa etapa está implementada na aplicação.
 
 
 ## Primeiro teste de extração
@@ -87,7 +88,8 @@ Após a reorganização do código, os seis casos sintéticos
 de extração passaram novamente.
 
 A aplicação funciona localmente. Os dados revisados permanecem
-apenas na sessão e ainda não são enviados a outro sistema.
+apenas na sessão, sem gravação em arquivo ou banco de dados.
+A mensagem original é enviada à API do Gemini para análise.
 
 Na revisão do código, identifiquei e corrigi uma falha na validação
 de caracteres como ² no campo de quantidade. O teste manual confirmou
@@ -105,3 +107,70 @@ e à confirmação da oferta.
 
 Verifiquei localmente a análise e a confirmação de uma oferta
 completa na nova interface.
+
+## Consulta de organizações receptoras fictícias
+
+Implementei a consulta de organizações com apoio do ChatGPT na
+preparação do código e na orientação dos testes. Revisei os resultados
+na interface e integrei a etapa à branch principal do projeto.
+
+O cadastro de demonstração contém três organizações fictícias.
+A consulta utiliza regras determinísticas em Python para verificar
+alimento aceito, bairro atendido, capacidade por oferta, dia da semana
+e sobreposição de horários. Não utiliza um modelo de IA para decidir
+a compatibilidade.
+
+A aplicação apresenta os motivos de cada classificação e a janela de
+horário em comum quando há compatibilidade. A sugestão depende de
+avaliação humana e não envia mensagens, reserva capacidade ou confirma
+a doação.
+
+### Verificações realizadas
+
+- O script `teste_organizacoes.py` verificou três de três classificações
+  corretas para a oferta inicial de 25 unidades de pão na Vila Mariana.
+- Com 60 unidades na Vila Mariana, nenhuma organização foi compatível.
+- Com 60 unidades em Moema, das 09:00 às 10:00, apenas o Centro
+  Comunitário C foi compatível.
+- Com 60 unidades em Moema, das 11:00 às 12:00, nenhuma organização
+  foi compatível: o término às 11:00 não cria um intervalo compartilhado.
+- Foram verificados a necessidade de reconfirmar a revisão e o descarte
+  do resultado anterior após alterações nos dados.
+
+Os cenários adicionais ao script inicial foram testados manualmente
+na interface. Eles não representam uma suíte automatizada completa.
+
+## Divisão de responsabilidades
+
+| Parte do fluxo | Responsabilidade |
+| --- | --- |
+| Extração da mensagem | Gemini, seguindo o prompt do projeto |
+| Validação dos campos e controle de estado | Código Python |
+| Correção e confirmação dos dados | Pessoa responsável pela triagem |
+| Consulta de compatibilidade | Regras em Python e cadastro fictício |
+| Aceite e condições reais de uma doação | Não implementados no protótipo |
+
+Usei IA também como apoio à implementação, à revisão de código e à
+atualização da documentação. As decisões de escopo, a aprovação da
+identidade visual e a conferência dos resultados foram realizadas por mim.
+
+## Limites da avaliação e tratamento dos dados
+
+Os testes utilizaram dados sintéticos. O resultado de seis de seis
+casos de extração não mede a precisão do modelo em mensagens reais
+nem garante o mesmo resultado em execuções futuras.
+
+O protótipo não verifica condições sanitárias, validade dos alimentos
+ou condições de transporte. A capacidade é considerada por oferta,
+sem controle de reservas ou soma de ofertas simultâneas.
+
+As mensagens analisadas são transmitidas à API do Gemini. A aplicação
+não grava ofertas em arquivo ou banco de dados; a revisão e a consulta
+permanecem na sessão. A chave da API é configurada localmente no
+arquivo `.env`, que não deve ser publicado.
+
+## Próximas etapas
+
+Ampliar a avaliação com novas mensagens, documentar resultados e
+preparar a demonstração online. Persistência e integrações externas
+continuam como possibilidades para uma etapa posterior.
