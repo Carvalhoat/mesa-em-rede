@@ -1,0 +1,390 @@
+{
+  "name": "Mesa em Rede — Registrar oferta revisada (modelo)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mesa-em-rede/ofertas",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "12d0c82d-6373-476d-b921-75655e080134",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"registro_ok\",\n  \"mensagem\": \"Oferta registrada na planilha.\",\n  \"registrado\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "cd61c810-2db4-4cc4-ba6e-56dec77b3f88",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "SUBSTITUA_PELO_ID_DA_PLANILHA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "ofertas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "oferta_id": "={{ $json.oferta_id }}",
+            "registrado_em": "={{ $json.registrado_em }}",
+            "restaurante_id": "={{ $json.restaurante_id }}",
+            "item": "={{ $json.item }}",
+            "quantidade": "={{ $json.quantidade }}",
+            "unidade": "={{ $json.unidade }}",
+            "bairro": "={{ $json.bairro }}",
+            "data_retirada": "={{ $json.data_retirada }}",
+            "horario_inicio": "={{ $json.horario_inicio }}",
+            "horario_fim": "={{ $json.horario_fim }}",
+            "status_oferta": "={{ $json.status_oferta }}",
+            "status_consulta": "={{ $json.status_consulta }}",
+            "total_organizacoes_compativeis": "={{ $json.total_organizacoes_compativeis }}",
+            "organizacoes_compativeis_ids": "={{ $json.organizacoes_compativeis_ids }}",
+            "consulta_realizada_em": "={{ $json.consulta_realizada_em }}",
+            "dados_ficticios": "={{ $json.dados_ficticios }}"
+          },
+          "matchingColumns": [
+            "oferta_id"
+          ],
+          "schema": [
+            {
+              "id": "oferta_id",
+              "displayName": "oferta_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "registrado_em",
+              "displayName": "registrado_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "restaurante_id",
+              "displayName": "restaurante_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "item",
+              "displayName": "item",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "quantidade",
+              "displayName": "quantidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "unidade",
+              "displayName": "unidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "bairro",
+              "displayName": "bairro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_retirada",
+              "displayName": "data_retirada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "horario_inicio",
+              "displayName": "horario_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "horario_fim",
+              "displayName": "horario_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status_oferta",
+              "displayName": "status_oferta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status_consulta",
+              "displayName": "status_consulta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_organizacoes_compativeis",
+              "displayName": "total_organizacoes_compativeis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "organizacoes_compativeis_ids",
+              "displayName": "organizacoes_compativeis_ids",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "consulta_realizada_em",
+              "displayName": "consulta_realizada_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dados_ficticios",
+              "displayName": "dados_ficticios",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        0
+      ],
+      "id": "479f89cd-11eb-4c19-b4e2-813e134ae299",
+      "name": "Append or update row in sheet"
+    },
+    {
+      "parameters": {
+        "jsCode": "const entradas = $input.all();\n\nif (entradas.length !== 1) {\n  throw new Error('Envie uma oferta por chamada.');\n}\n\nconst dados = entradas[0].json.body;\n\nif (!dados || typeof dados !== 'object' || Array.isArray(dados)) {\n  throw new Error('O corpo da chamada precisa ser um objeto JSON.');\n}\n\nfunction texto(valor, campo, limite = 150) {\n  if (\n    typeof valor !== 'string' ||\n    !valor.trim() ||\n    valor.trim().length > limite\n  ) {\n    throw new Error(`Campo inválido: ${campo}.`);\n  }\n\n  return valor.trim();\n}\n\n// Converte um instante para data/hora numérica do Sheets,\n// considerando o horário de São Paulo.\nfunction serialLocal(data) {\n  const partes = new Intl.DateTimeFormat('en-CA', {\n    timeZone: 'America/Sao_Paulo',\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit',\n    hour: '2-digit',\n    minute: '2-digit',\n    second: '2-digit',\n    hourCycle: 'h23'\n  }).formatToParts(data);\n\n  const p = Object.fromEntries(\n    partes.map(x => [x.type, x.value])\n  );\n\n  const local =\n    `${p.year}-${p.month}-${p.day}` +\n    `T${p.hour}:${p.minute}:${p.second}Z`;\n\n  return Date.parse(local) / 86400000 + 25569;\n}\n\nconst ofertaId = texto(dados.oferta_id, 'oferta_id', 80);\n\nif (!/^[A-Za-z0-9_-]+$/.test(ofertaId)) {\n  throw new Error('oferta_id inválido.');\n}\n\nif (dados.restaurante_id !== 'rest_demo_001') {\n  throw new Error('Restaurante não cadastrado.');\n}\n\nif (dados.revisao_confirmada !== true) {\n  throw new Error('A revisão precisa estar confirmada.');\n}\n\nif (dados.dados_ficticios !== true) {\n  throw new Error('Esta integração aceita apenas demonstrações fictícias.');\n}\n\nif (\n  !Number.isSafeInteger(dados.quantidade) ||\n  dados.quantidade <= 0\n) {\n  throw new Error('Quantidade precisa ser um número inteiro positivo.');\n}\n\nif (dados.unidade !== 'unidades') {\n  throw new Error('A unidade precisa ser unidades.');\n}\n\nconst item = texto(dados.item, 'item');\nconst bairro = texto(dados.bairro, 'bairro');\nconst data = texto(dados.data_retirada, 'data_retirada', 10);\n\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(data)) {\n  throw new Error('Data precisa usar AAAA-MM-DD.');\n}\n\nconst dia = new Date(`${data}T00:00:00Z`);\n\nif (\n  !Number.isFinite(dia.getTime()) ||\n  dia.toISOString().slice(0, 10) !== data ||\n  data < '1900-03-01'\n) {\n  throw new Error('Data de retirada inválida.');\n}\n\nconst intervalo = texto(\n  dados.horario_retirada,\n  'horario_retirada',\n  11\n);\n\nif (\n  !/^([01]\\d|2[0-3]):[0-5]\\d-([01]\\d|2[0-3]):[0-5]\\d$/.test(intervalo)\n) {\n  throw new Error('Horário precisa usar HH:MM-HH:MM.');\n}\n\nconst minutos = h =>\n  Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));\n\nconst [inicio, fim] = intervalo.split('-').map(minutos);\n\nif (fim <= inicio) {\n  throw new Error('O horário final precisa ser posterior ao inicial.');\n}\n\nconst consulta = dados.consulta ?? {\n  status: 'nao_consultada'\n};\n\nif (\n  !consulta ||\n  typeof consulta !== 'object' ||\n  Array.isArray(consulta)\n) {\n  throw new Error('Consulta inválida.');\n}\n\nconst status = consulta.status;\n\nif (\n  ![\n    'nao_consultada',\n    'com_compativeis',\n    'sem_compativeis',\n    'erro'\n  ].includes(status)\n) {\n  throw new Error('Status da consulta inválido.');\n}\n\nconst ids = consulta.organizacoes_compativeis_ids ?? [];\n\nconst conhecidos = [\n  'org_demo_001',\n  'org_demo_002',\n  'org_demo_003'\n];\n\nif (\n  !Array.isArray(ids) ||\n  ids.some(id => !conhecidos.includes(id)) ||\n  new Set(ids).size !== ids.length\n) {\n  throw new Error('Lista de organizações inválida ou duplicada.');\n}\n\nconst concluida = [\n  'com_compativeis',\n  'sem_compativeis'\n].includes(status);\n\nif (\n  (status === 'com_compativeis' && ids.length === 0) ||\n  (status !== 'com_compativeis' && ids.length > 0)\n) {\n  throw new Error('O status não corresponde à lista de organizações.');\n}\n\nlet momentoConsulta = '';\n\nif (concluida) {\n  const instante = consulta.realizada_em;\n\n  if (\n    typeof instante !== 'string' ||\n    !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$/.test(instante)\n  ) {\n    throw new Error('Informe realizada_em em ISO com fuso horário.');\n  }\n\n  const momento = new Date(instante);\n\n  if (!Number.isFinite(momento.getTime())) {\n    throw new Error('Data da consulta inválida.');\n  }\n\n  momentoConsulta = serialLocal(momento);\n} else if (\n  consulta.realizada_em != null &&\n  consulta.realizada_em !== ''\n) {\n  throw new Error('Consulta não concluída deve ter realizada_em vazio.');\n}\n\n// Envia somente as colunas previstas.\n// Os headers e o token não são copiados para a saída.\nreturn [{\n  json: {\n    oferta_id: ofertaId,\n    registrado_em: serialLocal(new Date()),\n    restaurante_id: dados.restaurante_id,\n    item,\n    quantidade: dados.quantidade,\n    unidade: dados.unidade,\n    bairro,\n    data_retirada: dia.getTime() / 86400000 + 25569,\n    horario_inicio: inicio / 1440,\n    horario_fim: fim / 1440,\n    status_oferta: 'registrada',\n    status_consulta: status,\n    total_organizacoes_compativeis: concluida ? ids.length : '',\n    organizacoes_compativeis_ids: ids.join(';'),\n    consulta_realizada_em: momentoConsulta,\n    dados_ficticios: 'sim'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "43156aac-ddd7-4233-908e-c58e9198af97",
+      "name": "Validar oferta",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "SUBSTITUA_PELO_ID_DA_PLANILHA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "ofertas",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "oferta_id",
+              "lookupValue": "={{ $json.oferta_id }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "SERIAL_NUMBER"
+            }
+          },
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "id": "86e758bc-247f-452f-92b5-0d3ca28a2902",
+      "name": "Buscar oferta existente",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const oferta = $('Validar oferta').first().json;\n\nconst existentes = $input.all()\n  .map(item => item.json)\n  .filter(item => Object.keys(item).length > 0);\n\nif (existentes.length > 1) {\n  throw new Error(\n    'Existe mais de uma linha com este oferta_id. Confira a planilha.'\n  );\n}\n\nconst registro = { ...oferta };\n\nif (existentes.length === 1) {\n  const anterior = existentes[0];\n\n  if (anterior.oferta_id !== oferta.oferta_id) {\n    throw new Error('A busca retornou um identificador diferente.');\n  }\n\n  if (anterior.restaurante_id !== oferta.restaurante_id) {\n    throw new Error('O restaurante difere do registro existente.');\n  }\n\n  if (anterior.status_oferta === 'cancelada') {\n    throw new Error(\n      'A oferta está cancelada. Não será reaberta automaticamente.'\n    );\n  }\n\n  if (\n    typeof anterior.registrado_em !== 'number' ||\n    !Number.isFinite(anterior.registrado_em) ||\n    anterior.registrado_em <= 0\n  ) {\n    throw new Error(\n      'Data original inválida. Confira Serial Number no bloco de busca.'\n    );\n  }\n\n  registro.registrado_em = anterior.registrado_em;\n}\n\nreturn [{ json: registro }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "bcbe47d5-8a82-4f8a-a615-13320ee6e535",
+      "name": "Preparar registro"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"oferta_invalida\",\n  \"mensagem\": \"Oferta não registrada. Confira os campos obrigatórios, a quantidade, a data e o horário.\",\n  \"registrado\": false\n}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        496,
+        144
+      ],
+      "id": "223de1c4-343a-47df-b1a1-7bbaa7a29a0d",
+      "name": "Responder oferta inválida"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validar oferta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar oferta": {
+      "main": [
+        [
+          {
+            "node": "Buscar oferta existente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder oferta inválida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar oferta existente": {
+      "main": [
+        [
+          {
+            "node": "Preparar registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar registro": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "active": false,
+  "pinData": {}
+}

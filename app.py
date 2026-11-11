@@ -1,7 +1,9 @@
 import re
+import json
+from uuid import uuid4
 import base64
 from html import escape
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from datetime import date
 from pathlib import Path
 
@@ -9,6 +11,9 @@ import streamlit as st
 
 from extracao import ErroExtracao, extrair_oferta
 from organizacoes import consultar_organizacoes
+from integracao_n8n import (
+    ErroRegistro, enviar_oferta, ler_configuracao, montar_payload, validar_configuracao,
+)
 
 
 PASTA = Path(__file__).resolve().parent
@@ -133,6 +138,9 @@ def reiniciar_revisao(oferta: dict[str, str | int | None]) -> None:
     st.session_state.resumo = None
     st.session_state.erros_revisao = []
     st.session_state.revisao_conferida = None
+    st.session_state.registro_id = "oferta_" + uuid4().hex
+    st.session_state.registro = None
+    st.session_state.registro_alguma_vez = False
 
 
 def garantir_estado() -> None:
@@ -143,6 +151,9 @@ def garantir_estado() -> None:
     st.session_state.setdefault("erros_revisao", [])
     st.session_state.setdefault("revisao_conferida", None)
     st.session_state.setdefault("consulta", None)
+    st.session_state.setdefault("registro_id", None)
+    st.session_state.setdefault("registro", None)
+    st.session_state.setdefault("registro_alguma_vez", False)
 
 
 def analisar_mensagem(texto: str) -> None:
@@ -266,6 +277,67 @@ def exibir_valores(valores: dict[str, str | int | None]) -> None:
         st.text(valor_exibicao(valores.get(campo)))
 
 
+def exibir_registro(resumo: dict, consulta: dict | None) -> None:
+    with st.container(border=True, key="registro"):
+        st.subheader("4. Registre a oferta revisada")
+        st.write("Salve esta oferta de demonstração na planilha do Mesa em Rede.")
+        st.caption("O registro não confirma uma doação, não contata organizações e não reserva capacidade. Alterações só são enviadas ao clicar no botão abaixo.")
+        if not st.session_state.registro_id:
+            st.session_state.registro_id = "oferta_" + uuid4().hex
+        try:
+            payload = montar_payload(st.session_state.registro_id, resumo, consulta)
+        except ErroRegistro as erro:
+            st.warning(str(erro))
+            return
+        assinatura = json.dumps(payload, sort_keys=True, ensure_ascii=True)
+        registro = st.session_state.registro
+        registro_atual = registro is not None and registro["assinatura"] == assinatura
+        confirmado = registro_atual and registro["confirmado"]
+        configuracao = None
+        problema_config = None
+        try:
+            configuracao = ler_configuracao(PASTA)
+            validar_configuracao(configuracao)
+        except ErroRegistro as erro:
+            problema_config = str(erro)
+        except OSError:
+            problema_config = "Não foi possível ler a configuração da integração. Confira o arquivo .env."
+        if problema_config:
+            st.info(problema_config)
+        if consulta is None:
+            st.caption("Esta oferta será salva como não consultada. Você poderá consultar organizações e atualizar o mesmo registro depois.")
+        st.caption("Identificador desta oferta: " + st.session_state.registro_id)
+        if st.session_state.registro_alguma_vez and not confirmado:
+            st.info("Há uma versão desta oferta na planilha. O botão atualizará a mesma linha com os dados atuais, preservando a data do primeiro registro.")
+        rotulo = "Oferta registrada" if confirmado else (
+            "Tentar registro novamente" if registro_atual and registro.get("erro") else (
+                "Atualizar oferta registrada" if st.session_state.registro_alguma_vez else "Registrar oferta"
+            )
+        )
+        if st.button(rotulo, key="registrar_oferta", type="primary", disabled=bool(problema_config) or confirmado):
+            estado = {"assinatura": assinatura, "confirmado": False, "erro": None, "incerto": False}
+            st.session_state.registro = estado
+            try:
+                with st.spinner("Registrando a oferta na planilha..."):
+                    enviar_oferta(payload, configuracao)
+            except ErroRegistro as erro:
+                estado["erro"] = str(erro)
+                estado["incerto"] = erro.incerto
+            else:
+                estado["confirmado"] = True
+                st.session_state.registro_alguma_vez = True
+            st.rerun()
+        registro = st.session_state.registro
+        if registro is not None and registro["assinatura"] == assinatura:
+            if registro["confirmado"]:
+                st.success("Oferta registrada no Google Sheets. O registro continuará na planilha após fechar ou recarregar a aplicação.")
+            elif registro.get("erro"):
+                st.error(registro["erro"])
+                if registro["incerto"]:
+                    st.warning("Resultado pendente de conferência: a gravação pode ter ocorrido. Consulte o identificador acima no Sheets antes de reenviar.")
+        st.caption("O identificador é mantido durante esta sessão. Uma nova análise inicia outra oferta; recarregar a página não recupera os registros anteriores na interface.")
+
+
 def exibir_etapas(ativa: int, completa: bool) -> None:
     estados = (
         ("Informar excedente", "Mensagem do restaurante"),
@@ -322,7 +394,9 @@ def main() -> None:
         imagem_personagem("pratinho-boas-vindas-final.png", "Pratinho acenando em boas-vindas", 210)
     st.markdown(
         '<div class="nota-demo">Demonstração com dados fictícios · '
-        'A revisão fica apenas nesta sessão e é descartada ao recarregar a página.</div>',
+        'A mensagem é enviada ao Gemini para análise. Ao clicar em Registrar oferta, '
+        'os dados revisados são enviados ao n8n e salvos no Google Sheets. '
+        'A mensagem original não é incluída nesse registro.</div>',
         unsafe_allow_html=True,
     )
 
@@ -460,6 +534,7 @@ def main() -> None:
                                     "oferta": resumo.copy(),
                                     "mensagem": st.session_state.mensagem_analisada,
                                     "resultados": resultados,
+                                    "realizada_em": datetime.now(timezone.utc).isoformat(),
                                 }
                     with ilustra:
                         imagem_personagem("caminhao-retirada-final.png", "Ilustração de retirada de alimentos", 140)
@@ -502,6 +577,7 @@ def main() -> None:
                                 st.write("**" + resultado["nome"] + "**")
                                 for motivo in resultado["impedimentos"]:
                                     st.write("• " + motivo)
+                exibir_registro(resumo, consulta if consulta_atual else None)
         elif resumo is not None and not mensagem_mudou:
             st.info("Os campos da revisão mudaram. Confirme novamente para atualizar o resumo desta sessão.")
 
