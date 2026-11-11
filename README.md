@@ -22,6 +22,7 @@ Protótipo local em Streamlit, demonstrado com mensagens fictícias de um restau
 4. Corrigir ou complementar os dados na revisão humana.
 5. Confirmar a revisão.
 6. Consultar organizações e verificar os motivos de compatibilidade ou incompatibilidade.
+7. Registrar explicitamente a oferta revisada no Google Sheets pelo webhook autenticado do n8n.
 
 Alterar a mensagem original exige nova análise. Alterar os campos revisados exige nova confirmação e invalida a consulta anterior.
 
@@ -58,7 +59,9 @@ O intervalo compartilhado precisa ter duração positiva: se a organização enc
 - A aplicação não envia mensagens, agenda retiradas nem reserva capacidade.
 - A capacidade é verificada por oferta, sem somar ofertas simultâneas ou dividir uma oferta entre organizações.
 - As regras não avaliam condições sanitárias, validade dos alimentos ou condições de transporte.
-- Os dados da oferta e da revisão ficam apenas na sessão da aplicação, sem gravação em arquivo ou banco de dados.
+- A revisão fica na sessão até o registro explícito. Ao clicar em Registrar oferta, os campos revisados e a consulta atual são enviados ao n8n e persistidos no Google Sheets. A mensagem original não é incluída nesse envio.
+- O ID é mantido nos reenvios da mesma oferta durante a sessão. Uma nova análise gera outro ID; a aplicação ainda não recupera ofertas de sessões anteriores.
+- A busca seguida da gravação no Sheets não é uma transação. Os testes verificaram reenvios sequenciais; não há garantia de unicidade para chamadas concorrentes.
 - A mensagem enviada para análise é transmitida à API do Gemini. Use dados fictícios na demonstração.
 
 ## Como executar no Windows
@@ -129,6 +132,10 @@ Também foram verificados os fluxos de correção, complementação de informaç
 | `app.py` | Interface e estado do fluxo de triagem |
 | `extracao.py` | Integração com Gemini e lógica de extração |
 | `organizacoes.py` | Regras de compatibilidade |
+| `integracao_n8n.py` | Montagem do payload, autenticação e tratamento das respostas do webhook |
+| `teste_integracao_n8n.py` | Testes locais da integração, sem rede |
+| `workflows/registrar-oferta-modelo.json` | Modelo público do workflow, sem credenciais ou IDs da planilha |
+| `INTEGRACAO_N8N.md` | Configuração e verificação da integração |
 | `data/exemplos.json` | Casos sintéticos de extração |
 | `data/organizacoes.json` | Cadastro fictício das organizações |
 | `prompts/extracao_v1.md` | Instruções de extração |
@@ -146,9 +153,30 @@ A identidade utiliza verde escuro `#234539`, creme `#FFF7EB` e terracota `#AD4D3
 ## Próximas etapas
 
 - Ampliar os casos de teste e a avaliação da extração.
+- Validar o registro a partir da interface e publicar o workflow para usar a URL de produção.
 - Preparar a demonstração e a publicação online do protótipo.
-- Avaliar persistência de ofertas e integrações externas em uma etapa posterior.
+- Evoluir o acompanhamento de registros, a concorrência e as integrações externas.
 
 ## Autoria
 
 Amanda Carvalho Teixeira.
+
+## Registro com n8n e Google Sheets
+
+A integração da interface foi implementada e verificada localmente com respostas simuladas. O workflow do n8n foi testado separadamente com ofertas fictícias enviadas pelo terminal: registro novo, reenvio sem duplicação sequencial, preservação da data original e rejeição da quantidade zero com HTTP 422. A verificação final da interface contra o workflow é a próxima etapa.
+
+Configure `N8N_WEBHOOK_URL` e `N8N_WEBHOOK_TOKEN` no `.env`, preservando `GEMINI_API_KEY`. Consulte [INTEGRACAO_N8N.md](INTEGRACAO_N8N.md). Não publique o `.env`.
+
+O botão Registrar oferta aparece somente com a revisão completa e confirmada. A consulta é opcional: sem consulta atual, a oferta é registrada como `nao_consultada`. Com consulta, o envio inclui seus IDs compatíveis e seu instante original. Alterar a revisão bloqueia o registro até reconfirmar.
+
+O n8n mantém a decisão de compatibilidade recebida da aplicação, conferindo o formato e a coerência dos campos. Ele não recalcula as regras de compatibilidade nem lê dinamicamente o cadastro de organizações da planilha. Os IDs de demonstração são fixos nesta versão.
+
+Somente HTTP 200 com `status=registro_ok` e `registrado=true` confirma o sucesso na tela. Falhas de rede ou respostas inesperadas são exibidas como resultado não confirmado, sem reenvio automático. O usuário deve conferir a execução e a planilha antes de tentar novamente com o mesmo ID.
+
+Para testar o módulo sem rede:
+
+```powershell
+.\.venv\Scripts\python.exe teste_integracao_n8n.py
+```
+
+Os 14 testes do módulo verificam payloads, consulta desatualizada, valores inválidos, configuração, respostas HTTP, timeout e bloqueio de redirecionamento com token. Eles não substituem o teste da conta real no n8n.

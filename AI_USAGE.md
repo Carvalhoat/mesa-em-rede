@@ -87,8 +87,9 @@ Revisei o funcionamento executando testes manuais no navegador.
 Após a reorganização do código, os seis casos sintéticos
 de extração passaram novamente.
 
-A aplicação funciona localmente. Os dados revisados permanecem
-apenas na sessão, sem gravação em arquivo ou banco de dados.
+Na versão inicial, a aplicação funcionava localmente e os dados revisados
+permaneciam apenas na sessão. O registro persistente foi acrescentado
+na etapa de integração descrita ao final deste documento.
 A mensagem original é enviada à API do Gemini para análise.
 
 Na revisão do código, identifiquei e corrigi uma falha na validação
@@ -164,13 +165,56 @@ O protótipo não verifica condições sanitárias, validade dos alimentos
 ou condições de transporte. A capacidade é considerada por oferta,
 sem controle de reservas ou soma de ofertas simultâneas.
 
-As mensagens analisadas são transmitidas à API do Gemini. A aplicação
-não grava ofertas em arquivo ou banco de dados; a revisão e a consulta
-permanecem na sessão. A chave da API é configurada localmente no
+As mensagens analisadas são transmitidas à API do Gemini. A revisão e a consulta permanecem na sessão até o registro explícito.
+Na versão com integração, clicar em Registrar oferta envia os campos
+revisados e a consulta atual ao n8n, para gravação no Google Sheets.
+A mensagem original não faz parte desse registro. A chave da API é configurada localmente no
 arquivo `.env`, que não deve ser publicado.
 
 ## Próximas etapas
 
 Ampliar a avaliação com novas mensagens, documentar resultados e
-preparar a demonstração online. Persistência e integrações externas
-continuam como possibilidades para uma etapa posterior.
+preparar a demonstração online. O registro no Sheets pelo n8n foi acrescentado ao protótipo.
+A verificação final pela interface e a publicação online continuam pendentes.
+
+
+## Automação com n8n e registro no Sheets
+
+Configurei um workflow no n8n Cloud com apoio do ChatGPT, usando:
+
+1. Webhook POST autenticado por header.
+2. Validação dos dados revisados em JavaScript.
+3. Busca por `oferta_id` na planilha.
+4. Preparação do registro, preservando a data original.
+5. Inclusão ou atualização da linha no Sheets em modo RAW.
+6. Resposta de confirmação ou rejeição com HTTP 422.
+
+Testei o workflow com ofertas fictícias pelo terminal. Confirmei a
+gravação de uma oferta nova, o reenvio sequencial sem duplicar a linha,
+a preservação do primeiro horário e o bloqueio da quantidade zero
+antes do acesso ao Sheets.
+
+A automação é um fluxo determinístico. O n8n não utiliza IA para gravar
+a planilha nem recalcula o resultado da consulta recebido da aplicação.
+A extração por Gemini continua sendo uma etapa separada.
+
+Usei apoio do ChatGPT na implementação do botão Registrar oferta e do
+módulo `integracao_n8n.py`. A implementação passou por 14 testes locais
+do módulo e verificações da interface com extração, consulta e webhook
+simulados. A gravação do botão contra o workflow real ainda precisa
+ser conferida no ambiente de demonstração.
+
+O envio exige ação explícita. O aplicativo mantém o mesmo ID nos
+reenvios da sessão e não repete chamadas automaticamente após falhas.
+Os testes de duplicação foram sequenciais; o Sheets ainda não oferece
+controle transacional ou garantia de unicidade para chamadas concorrentes.
+
+A planilha não contém dados de beneficiários, a mensagem original ou
+o token do webhook. As credenciais ficam no n8n e no `.env` local.
+O histórico de execuções do n8n pode incluir o header de autenticação,
+portanto não deve ser publicado ou compartilhado sem revisão.
+
+O arquivo `workflows/registrar-oferta-modelo.json` é uma versão pública
+do fluxo sem credenciais, dados fixados ou identificadores da conta e
+da planilha. Quem importar o modelo precisará selecionar suas próprias
+credenciais e configurar o documento de destino.
