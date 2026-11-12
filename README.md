@@ -1,182 +1,259 @@
-![Mesa em Rede](brand/logo-com-assinatura.png)
+![Mesa em Rede — Conectando excedentes alimentares a quem pode recebê-los. Pratinho acenando, Pratinho pesquisando, caminhão com alimentos e Pratinho com uma refeição.](brand/exportacoes/capa-readme.png)
 
 # Mesa em Rede
 
-Projeto de portfólio que usa inteligência artificial para apoiar a triagem de excedentes alimentares, com revisão humana e consulta a organizações receptoras fictícias.
+IA para organizar ofertas de excedentes alimentares, identificar informações
+pendentes e apoiar a consulta de organizações receptoras, com revisão humana.
 
-## Problema
+**[Acesse a demonstração online](https://mesa-em-rede.streamlit.app/)**
 
-Informações sobre excedentes podem chegar em mensagens informais e incompletas. Organizar esses dados e verificar o que falta exige trabalho de quem faz a triagem.
+Projeto de portfólio desenvolvido por **Amanda Carvalho Teixeira**. A demonstração
+utiliza ofertas e organizações fictícias; compatibilidade inicial não confirma
+uma doação, uma retirada ou o atendimento de pessoas.
 
-## Proposta
+## O problema e a proposta
 
-Transformar mensagens de restaurantes em ofertas estruturadas, identificar informações pendentes e sugerir organizações compatíveis para avaliação pela pessoa responsável. A proposta é apoiar uma rede de redistribuição de alimentos para organizações que atendem pessoas em situação de vulnerabilidade social.
+Mensagens informais sobre excedentes podem chegar incompletas ou ambíguas.
+Quem faz a triagem precisa organizar alimento, quantidade, bairro e janela de
+retirada antes de avaliar possíveis organizações receptoras.
 
-## Status e fluxo implementado
+O Mesa em Rede combina um agente Gemini, regras de compatibilidade em Python,
+confirmação humana e uma automação n8n para registrar ofertas revisadas no
+Google Sheets. Um painel permite explorar os registros importados por CSV.
 
-Protótipo local em Streamlit, demonstrado com mensagens fictícias de um restaurante e um cadastro de três organizações receptoras fictícias.
+## Experimente
 
-1. Informar a mensagem do restaurante ou carregar um exemplo.
-2. Analisar a mensagem com a API do Gemini.
-3. Conferir os campos extraídos e as informações ausentes.
-4. Corrigir ou complementar os dados na revisão humana.
-5. Confirmar a revisão.
-6. Consultar organizações e verificar os motivos de compatibilidade ou incompatibilidade.
-7. Registrar explicitamente a oferta revisada no Google Sheets pelo webhook autenticado do n8n.
+Na página **Triagem da oferta**, informe uma mensagem fictícia:
 
-Alterar a mensagem original exige nova análise. Alterar os campos revisados exige nova confirmação e invalida a consulta anterior.
+```text
+Temos 25 unidades de pão na Vila Mariana, para retirada em 16/11/2026, das 9h às 10h.
+```
 
-## Dados da oferta
+1. Clique em **Analisar mensagem** e confira os dados identificados pelo agente.
+2. Complete ou corrija os campos e clique em **Confirmar revisão**.
+3. Confira a compatibilidade inicial e os motivos apresentados.
+4. Para persistir a oferta fictícia, clique explicitamente em **Registrar oferta**.
+
+Para esse exemplo, a Cozinha Comunitária A — Fictícia atende aos critérios do
+cadastro. A data faz parte do caso de demonstração; a consulta não bloqueia datas
+passadas nem verifica disponibilidade real. O botão **Usar exemplo** gera outra
+mensagem com data relativa ao dia de execução, cujo resultado depende do dia da semana.
+
+Uma mensagem sem quantidade deve gerar uma pergunta, sem consulta de organizações.
+É possível completar a revisão diretamente no formulário. Uma alteração nos campos
+exige nova confirmação; uma consulta de dados diferentes não pode acompanhar o registro.
+
+No **Painel de indicadores**, escolha **Exemplo fictício** para explorar os gráficos
+sem importar um arquivo. Esse conjunto é independente da planilha da aplicação.
+
+## Como o agente funciona
+
+O Gemini solicita ferramentas por **function calling**. A aplicação executa
+somente as ferramentas permitidas e devolve seus resultados ao modelo.
+
+| Parte | Responsabilidade |
+| --- | --- |
+| Agente Gemini | Solicitar extração e, com dados completos, consulta das organizações |
+| `extrair_oferta` | Reutilizar a extração estruturada e apontar pendências |
+| `consultar_organizacoes` | Aplicar regras determinísticas ao cadastro fictício |
+| Código Python | Validar pedidos, limitar etapas e montar o resultado oficial |
+| Pessoa responsável | Corrigir os dados, confirmar a revisão e decidir registrar |
+| n8n e Google Sheets | Validar o payload e incluir ou atualizar a oferta |
+
+As ferramentas recebem a mensagem ou a oferta mantida pelo Python; o agente
+não pode substituir esses dados por argumentos próprios. Há limite de quatro
+chamadas de orquestração e quatro pedidos de ferramentas por análise. A extração
+reutilizada faz sua própria chamada ao Gemini e possui política de tentativas.
+Uma análise pode, portanto, consumir várias chamadas à API.
+
+O agente não tem ferramentas para gravar ofertas, enviar mensagens, agendar
+retiradas ou confirmar doações. Seu texto livre não substitui os resultados das
+ferramentas. Cada análise começa do zero, sem memória de conversa entre análises.
+
+Na interface, uma prévia de consulta fica separada da revisão confirmada. Ela
+é aproveitada após a confirmação humana somente se corresponder à mesma oferta.
+Correções podem ser consultadas novamente pelas regras locais, sem nova chamada Gemini.
+
+## Dados e critérios de compatibilidade
 
 | Campo | Formato esperado |
 | --- | --- |
-| Item | Nome do alimento |
-| Quantidade | Número inteiro positivo, em unidades |
-| Bairro | Bairro da oferta |
+| Item | Um alimento por oferta |
+| Quantidade | Inteiro positivo, em unidades |
+| Bairro | Bairro explicitamente informado |
 | Data de retirada | `AAAA-MM-DD` |
 | Horário de retirada | `HH:MM-HH:MM`, com fim posterior ao início |
 
-Informações ausentes ou ambíguas devem permanecer como `null` na extração e ser conferidas pela pessoa responsável. A consulta exige os cinco campos preenchidos e válidos.
+O prompt orienta a manter informações ausentes ou ambíguas como `null`, sem
+completar por suposição. Quantidades aproximadas, datas relativas e horários
+com apenas um limite exigem conferência. A consulta requer os cinco campos válidos.
 
-## Critérios da consulta
+Uma organização precisa aceitar o alimento, atender ao bairro, comportar a
+quantidade, atender no dia da semana e ter um intervalo de retirada em comum.
+Os nomes são comparados sem diferenças de maiúsculas, acentos ou espaços extras;
+não há interpretação de sinônimos nem cálculo de proximidade geográfica.
 
-A consulta é feita por regras em Python. Uma organização precisa atender simultaneamente a todos os critérios:
+A sobreposição de horários precisa ter duração positiva: um atendimento que
+termina às 11h não coincide com uma oferta cuja retirada começa às 11h.
+O cadastro local contém três organizações fictícias e não é sincronizado
+automaticamente com a aba de organizações da planilha.
 
-- Aceitar o alimento informado.
-- Atender ao bairro da oferta.
-- Ter capacidade por oferta igual ou superior à quantidade informada.
-- Estar disponível no dia da semana da retirada.
-- Ter um intervalo de horário em comum com a oferta.
+## Registro e persistência
 
-A comparação dos nomes de alimentos e bairros desconsidera diferenças de maiúsculas, acentos e espaços extras. Não interpreta sinônimos nem estima proximidade geográfica.
+O botão **Registrar oferta** fica disponível com revisão completa e confirmada.
+Ele envia os dados revisados ao webhook autenticado do n8n. A consulta é opcional:
+sem resultado atual, a oferta é registrada como `nao_consultada`.
 
-O intervalo compartilhado precisa ter duração positiva: se a organização encerra às 11:00 e a oferta começa às 11:00, não há compatibilidade de horário. Quando há compatibilidade, a consulta apresenta a janela em comum.
+O workflow busca o `oferta_id`, prepara a inclusão ou atualização e preserva o
+instante do primeiro registro. Somente uma resposta HTTP 200 com
+`status=registro_ok` e `registrado=true` confirma o sucesso na interface.
+Falhas de resultado incerto exigem conferência na planilha antes de reenviar.
 
-## Limitações da demonstração
+O identificador é mantido durante a sessão para atualizar a mesma oferta.
+Uma nova análise gera outro ID. Recarregar a página não recupera registros
+anteriores na interface; os registros já gravados continuam na planilha.
+O n8n confere formato e coerência dos dados recebidos, mas não recalcula a
+compatibilidade. A busca e a gravação no Sheets não são uma transação: os testes
+de não duplicação foram sequenciais, sem garantia para chamadas concorrentes.
 
-- O cadastro e as ofertas de demonstração são fictícios.
-- A compatibilidade é uma sugestão para avaliação humana; não confirma uma doação.
-- A aplicação não envia mensagens, agenda retiradas nem reserva capacidade.
-- A capacidade é verificada por oferta, sem somar ofertas simultâneas ou dividir uma oferta entre organizações.
-- As regras não avaliam condições sanitárias, validade dos alimentos ou condições de transporte.
-- A revisão fica na sessão até o registro explícito. Ao clicar em Registrar oferta, os campos revisados e a consulta atual são enviados ao n8n e persistidos no Google Sheets. A mensagem original não é incluída nesse envio.
-- O ID é mantido nos reenvios da mesma oferta durante a sessão. Uma nova análise gera outro ID; a aplicação ainda não recupera ofertas de sessões anteriores.
-- A busca seguida da gravação no Sheets não é uma transação. Os testes verificaram reenvios sequenciais; não há garantia de unicidade para chamadas concorrentes.
-- A mensagem enviada para análise é transmitida à API do Gemini. Use dados fictícios na demonstração.
+## Painel de indicadores
 
-## Como executar no Windows
+Importe o CSV da aba **ofertas**: no Sheets, selecione a aba e use **Arquivo →
+Fazer download → Valores separados por vírgulas (.csv, página atual)**.
 
-Abra um terminal na pasta principal do projeto. É necessário ter Python instalado e uma chave válida da API do Gemini.
+O painel apresenta total de ofertas, resultados de compatibilidade e gráficos
+por alimento e bairro. Os filtros usam data do primeiro registro, bairro,
+alimento e situação da oferta. Por padrão, ofertas canceladas ficam de fora.
 
-1. Crie o ambiente virtual, caso ainda não exista:
+**Taxa de compatibilidade = com compatibilidade ÷ (com + sem compatibilidade).**
+Ofertas não consultadas ou com erro são mostradas separadamente e não entram
+no denominador. Sem consultas concluídas, a taxa não é calculada.
 
-   ```powershell
-   py -m venv .venv
-   ```
+O painel reflete o arquivo importado e **não se atualiza automaticamente** após
+um registro. Exporte e importe novamente para obter novos dados. Os gráficos
+contam ofertas, sem somar unidades de alimentos diferentes. IDs duplicados ou
+dados inconsistentes bloqueiam o cálculo em vez de serem descartados silenciosamente.
+Veja [PAINEL_INDICADORES.md](PAINEL_INDICADORES.md) para formatos e limites.
 
-2. Instale as dependências:
+## Tecnologia
 
-   ```powershell
-   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-   ```
+Python, Streamlit, Google Gen AI SDK, Pydantic, n8n Cloud, Google Sheets e Git/GitHub.
+A demonstração foi publicada no Streamlit Community Cloud com Python 3.12.
 
-3. Copie `.env.example` para `.env`, caso ainda não tenha configurado o arquivo, e preencha `GEMINI_API_KEY` com sua chave. Não publique o arquivo `.env`.
+## Execução local no Windows
 
-4. Inicie a aplicação:
-
-   ```powershell
-   .\.venv\Scripts\python.exe -m streamlit run app.py
-   ```
-
-5. Abra o endereço local indicado pelo Streamlit no terminal. Para encerrar, pressione `Ctrl+C` no terminal.
-
-## Exemplo para demonstração
-
-```text
-Temos 25 unidades de pão na Vila Mariana. A retirada é dia 12/11/2026, das 09:00 às 10:00.
-```
-
-Após a análise, confira os cinco campos e confirme a revisão antes de consultar organizações.
-
-## Validação realizada
-
-Para executar os seis casos sintéticos de extração, com chamada à API do Gemini:
+Na raiz do projeto:
 
 ```powershell
-.\.venv\Scripts\python.exe teste_extracao.py
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Resultado observado: seis de seis casos passaram em uma execução completa. Os casos cobrem mensagem completa, horário ausente, quantidade aproximada, data relativa, horário com apenas um limite e quantidades contraditórias. Esse resultado se limita aos exemplos testados.
+Crie um `.env` local a partir de `.env.example`, se necessário, e configure:
 
-Para executar a verificação inicial da consulta, sem chamada ao Gemini:
+```dotenv
+GEMINI_API_KEY="SUA_CHAVE_GEMINI"
+GEMINI_MODEL="SEU_MODELO_COM_FUNCTION_CALLING"
+N8N_WEBHOOK_URL="SUA_URL_HTTPS_DE_PRODUCAO"
+N8N_WEBHOOK_TOKEN="SEU_TOKEN_N8N"
+```
+
+Para analisar mensagens, são necessários chave Gemini e modelo compatível.
+O registro exige também a URL e o token do seu workflow publicado; o header
+de autenticação usado na integração é `X-Mesa-Token`. O painel de exemplo pode
+ser explorado sem realizar chamadas Gemini ou n8n.
 
 ```powershell
-.\.venv\Scripts\python.exe teste_organizacoes.py
+.\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Resultado observado: três de três classificações corretas para a oferta inicial. Esse script verifica as classificações das três organizações; os cenários adicionais abaixo foram verificados manualmente na interface.
+No Community Cloud, configure os quatro valores como chaves no nível raiz do
+campo **Secrets**, em formato TOML, mantendo cada valor entre aspas. Não adicione
+uma seção `[secrets]`. O aplicativo também lê esses valores pelas variáveis de
+ambiente disponibilizadas pelo Streamlit. Não publique `.env` ou `secrets.toml`.
 
-| Oferta de pão em 12/11/2026 | Resultado observado |
-| --- | --- |
-| 25 unidades, Vila Mariana, 09:00–10:00 | Cozinha Comunitária A compatível; B sem capacidade; C fora do bairro |
-| 60 unidades, Vila Mariana, 09:00–10:00 | Nenhuma organização compatível |
-| 60 unidades, Moema, 09:00–10:00 | Centro Comunitário C compatível |
-| 60 unidades, Moema, 11:00–12:00 | Nenhuma organização compatível |
+## Validação
 
-Também foram verificados os fluxos de correção, complementação de informações ausentes, rejeição de quantidade e horário inválidos, bloqueio de revisão desatualizada e invalidação da consulta após alterações.
+```powershell
+.\.venv\Scripts\python.exe -m unittest teste_agente_triagem.py teste_integracao_n8n.py teste_interface_agente.py teste_painel_indicadores.py teste_interface_painel.py -v
+```
 
-## Organização do projeto
+**58 testes locais aprovados**, com chamadas externas simuladas:
+
+| Grupo | Testes |
+| --- | ---: |
+| Agente de triagem | 21 |
+| Integração n8n | 14 |
+| Interface do agente | 6 |
+| Importação e indicadores | 12 |
+| Interface do painel | 5 |
+
+Os testes abrangem pendências, ferramentas não permitidas, limites de execução,
+falhas de conexão, revisão desatualizada, envio explícito, leitura de CSV,
+duplicidade de IDs, filtros, denominador da taxa e preservação da revisão na navegação.
+
+Também foram conferidos manualmente:
+
+- Agente com Gemini real para oferta completa e quantidade ausente.
+- Correção de 25 para 60 unidades na Vila Mariana, nova consulta sem compatíveis
+  e registro da oferta corrigida no Sheets.
+- Reenvio sequencial sem duplicação, preservação do primeiro registro e rejeição
+  de quantidade zero pelo workflow com HTTP 422.
+- Publicação online, análise de uma oferta de 25 unidades com retirada em
+  16/11/2026 e confirmação do registro correspondente na planilha.
+- Painel local com CSV exportado da demonstração e painel de exemplo na hospedagem.
+- Rodapé ilustrado nas páginas do aplicativo, com personagens estáticos.
+
+A avaliação inicial de extração também obteve seis de seis casos sintéticos em
+uma execução de `teste_extracao.py`. `teste_organizacoes.py` verificou três
+classificações da oferta inicial. Esses scripts são separados da suíte de 58
+testes e o teste de extração consome a API. Resultados sintéticos não medem a
+precisão em mensagens reais nem garantem respostas idênticas no futuro.
+
+## Estrutura principal
 
 | Arquivo ou pasta | Função |
 | --- | --- |
-| `app.py` | Interface e estado do fluxo de triagem |
-| `extracao.py` | Integração com Gemini e lógica de extração |
+| `app.py` | Interface, revisão humana, registro e navegação |
+| `agente_triagem.py` | Orquestração Gemini e controle de ferramentas |
+| `extracao.py` | Extração estruturada dos cinco campos |
 | `organizacoes.py` | Regras de compatibilidade |
-| `integracao_n8n.py` | Montagem do payload, autenticação e tratamento das respostas do webhook |
-| `teste_integracao_n8n.py` | Testes locais da integração, sem rede |
-| `workflows/registrar-oferta-modelo.json` | Modelo público do workflow, sem credenciais ou IDs da planilha |
-| `INTEGRACAO_N8N.md` | Configuração e verificação da integração |
-| `data/exemplos.json` | Casos sintéticos de extração |
-| `data/organizacoes.json` | Cadastro fictício das organizações |
-| `prompts/extracao_v1.md` | Instruções de extração |
-| `teste_extracao.py` | Comparação da extração com gabaritos |
-| `teste_organizacoes.py` | Verificação inicial das classificações |
-| `brand/` | Briefing, marca e personagens |
-| `AI_USAGE.md` | Registro do uso de IA no desenvolvimento |
+| `integracao_n8n.py` | Payload, autenticação e respostas do registro |
+| `painel_indicadores.py` | Importação CSV, filtros e indicadores |
+| `prompts/` | Instruções de extração e do agente |
+| `data/` | Cadastro, casos sintéticos e exemplo do painel |
+| `workflows/registrar-oferta-modelo.json` | Modelo público sem credenciais ou IDs da planilha |
+| `AGENTE_TRIAGEM.md` e `INTEGRACAO_AGENTE.md` | Módulo do agente e integração visual |
+| `INTEGRACAO_N8N.md` | Configuração e verificação do registro |
+| `PAINEL_INDICADORES.md` | Fonte e regras dos indicadores |
+| `RODAPE_INTERFACE.md` e `brand/` | Rodapé, identidade visual e personagens |
+| `AI_USAGE.md` | Uso de IA, participação humana e limites da avaliação |
 
-## Identidade visual
+## Limites e tratamento dos dados
 
-O símbolo B2 representa a conexão entre o restaurante, a pessoa responsável pela triagem e a organização receptora. O personagem pratinho e o caminhão ilustram as etapas do fluxo.
+- A aplicação não verifica condições sanitárias, validade ou transporte.
+- A capacidade é por oferta, sem soma de ofertas simultâneas, divisão ou reserva.
+- Não há confirmação de aceite, contato com organizações ou comprovação de entrega.
+- Não há autenticação de restaurantes ou gestão de acesso por perfil no protótipo.
+- Mensagem, dados extraídos e resultados fictícios das ferramentas são transmitidos
+  ao Gemini durante a triagem. Use dados fictícios, sem dados de beneficiários.
+- O registro envia campos revisados e consulta ao n8n/Sheets; não inclui a mensagem
+  original. O CSV do painel não é enviado ao Gemini ou ao n8n.
+- O histórico do n8n pode conter headers de autenticação; não publique exportações
+  de execuções ou credenciais. O modelo público do workflow foi preparado sem esses dados.
+- A disponibilidade depende dos serviços externos, das cotas Gemini e da manutenção
+  do workflow n8n. A publicação não elimina esses limites da demonstração.
 
-A identidade utiliza verde escuro `#234539`, creme `#FFF7EB` e terracota `#AD4D35`. O briefing e os arquivos da marca estão na pasta `brand`.
+## Identidade e autoria
 
-## Próximas etapas
+O símbolo B2 conecta restaurante, pessoa responsável pela triagem e organização
+receptora. Verde escuro `#234539`, creme `#FFF7EB` e terracota `#AD4D35` compõem
+a identidade. O Pratinho, o caminhão e o rodapé ilustram o fluxo.
 
-- Ampliar os casos de teste e a avaliação da extração.
-- Validar o registro a partir da interface e publicar o workflow para usar a URL de produção.
-- Preparar a demonstração e a publicação online do protótipo.
-- Evoluir o acompanhamento de registros, a concorrência e as integrações externas.
+**Amanda Carvalho Teixeira** — concepção, decisões de escopo e identidade,
+configuração dos serviços e conferência dos resultados, com apoio de ferramentas
+de IA documentado em [AI_USAGE.md](AI_USAGE.md).
 
-## Autoria
-
-Amanda Carvalho Teixeira.
-
-## Registro com n8n e Google Sheets
-
-A integração da interface foi implementada e verificada localmente com respostas simuladas. O workflow do n8n foi testado separadamente com ofertas fictícias enviadas pelo terminal: registro novo, reenvio sem duplicação sequencial, preservação da data original e rejeição da quantidade zero com HTTP 422. A verificação final da interface contra o workflow é a próxima etapa.
-
-Configure `N8N_WEBHOOK_URL` e `N8N_WEBHOOK_TOKEN` no `.env`, preservando `GEMINI_API_KEY`. Consulte [INTEGRACAO_N8N.md](INTEGRACAO_N8N.md). Não publique o `.env`.
-
-O botão Registrar oferta aparece somente com a revisão completa e confirmada. A consulta é opcional: sem consulta atual, a oferta é registrada como `nao_consultada`. Com consulta, o envio inclui seus IDs compatíveis e seu instante original. Alterar a revisão bloqueia o registro até reconfirmar.
-
-O n8n mantém a decisão de compatibilidade recebida da aplicação, conferindo o formato e a coerência dos campos. Ele não recalcula as regras de compatibilidade nem lê dinamicamente o cadastro de organizações da planilha. Os IDs de demonstração são fixos nesta versão.
-
-Somente HTTP 200 com `status=registro_ok` e `registrado=true` confirma o sucesso na tela. Falhas de rede ou respostas inesperadas são exibidas como resultado não confirmado, sem reenvio automático. O usuário deve conferir a execução e a planilha antes de tentar novamente com o mesmo ID.
-
-Para testar o módulo sem rede:
-
-```powershell
-.\.venv\Scripts\python.exe teste_integracao_n8n.py
-```
-
-Os 14 testes do módulo verificam payloads, consulta desatualizada, valores inválidos, configuração, respostas HTTP, timeout e bloqueio de redirecionamento com token. Eles não substituem o teste da conta real no n8n.
+Próximas evoluções: ampliar a avaliação com mensagens variadas, preparar a
+demonstração em vídeo, estudar atualização automática dos indicadores e aperfeiçoar
+controle de acesso, recuperação de registros e concorrência na persistência.
