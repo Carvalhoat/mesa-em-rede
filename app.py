@@ -11,6 +11,7 @@ from pathlib import Path
 import streamlit as st
 
 from agente_triagem import ErroTriagem, executar_triagem
+from painel_indicadores import exibir_painel
 from organizacoes import consultar_organizacoes
 from integracao_n8n import (
     ErroRegistro, enviar_oferta, ler_configuracao, montar_payload, validar_configuracao,
@@ -384,6 +385,14 @@ def main() -> None:
     st.set_page_config(page_title="Mesa em Rede · Triagem", page_icon="🍽️", layout="wide")
     aplicar_estilo()
     garantir_estado()
+    # Mantém os campos da triagem quando seus widgets ficam fora da página.
+    for chave in ("mensagem", *CHAVES_REVISAO.values()):
+        if chave in st.session_state:
+            st.session_state[chave] = st.session_state[chave]
+    pagina = st.sidebar.radio("Navegação", ["Triagem da oferta", "Painel de indicadores"], key="pagina")
+    if pagina == "Painel de indicadores":
+        exibir_painel(PASTA)
+        return
 
     # O símbolo é HTML/SVG estático, com fundo transparente.
     st.markdown(
