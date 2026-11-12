@@ -1,0 +1,7 @@
+﻿oferta_id,registrado_em,restaurante_id,item,quantidade,unidade,bairro,data_retirada,horario_inicio,horario_fim,status_oferta,status_consulta,total_organizacoes_compativeis,organizacoes_compativeis_ids,consulta_realizada_em,dados_ficticios
+painel_demo_001,2026-11-11 10:00:00,rest_demo_001,pão,25,unidades,Vila Mariana,2026-11-16,09:00,10:00,registrada,com_compativeis,1,org_demo_001,2026-11-11 10:00:00,sim
+painel_demo_002,2026-11-11 11:00:00,rest_demo_001,pão,60,unidades,Vila Mariana,2026-11-16,09:00,10:00,registrada,sem_compativeis,0,,2026-11-11 11:00:00,sim
+painel_demo_003,2026-11-12 10:00:00,rest_demo_001,pão integral,8,unidades,Vila Mariana,2026-11-16,09:00,10:00,registrada,com_compativeis,2,org_demo_001;org_demo_002,2026-11-12 10:00:00,sim
+painel_demo_004,2026-11-12 11:00:00,rest_demo_001,arroz,10,unidades,Moema,2026-11-16,09:00,10:00,registrada,nao_consultada,,,,sim
+painel_demo_005,2026-11-13 10:00:00,rest_demo_001,banana,15,unidades,Moema,2026-11-16,09:00,10:00,registrada,erro,,,,sim
+painel_demo_006,2026-11-14 10:00:00,rest_demo_001,pão,20,unidades,Vila Mariana,2026-11-16,09:00,10:00,cancelada,com_compativeis,1,org_demo_001,2026-11-14 10:00:00,sim
