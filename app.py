@@ -1,5 +1,6 @@
 import re
 import json
+from copy import deepcopy
 from uuid import uuid4
 import base64
 from html import escape
@@ -9,7 +10,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from extracao import ErroExtracao, extrair_oferta
+from agente_triagem import ErroTriagem, executar_triagem
 from organizacoes import consultar_organizacoes
 from integracao_n8n import (
     ErroRegistro, enviar_oferta, ler_configuracao, montar_payload, validar_configuracao,
@@ -151,16 +152,22 @@ def garantir_estado() -> None:
     st.session_state.setdefault("erros_revisao", [])
     st.session_state.setdefault("revisao_conferida", None)
     st.session_state.setdefault("consulta", None)
+    st.session_state.setdefault("triagem", None)
+    st.session_state.setdefault("previa_consulta", None)
     st.session_state.setdefault("registro_id", None)
     st.session_state.setdefault("registro", None)
     st.session_state.setdefault("registro_alguma_vez", False)
 
 
 def analisar_mensagem(texto: str) -> None:
+    st.session_state.consulta = None
+    st.session_state.triagem = None
+    st.session_state.previa_consulta = None
     try:
-        with st.spinner("Analisando a mensagem..."):
-            oferta = extrair_oferta(texto).model_dump()
-    except ErroExtracao as erro:
+        with st.spinner("O agente está organizando a oferta e verificando pendências..."):
+            triagem = executar_triagem(texto)
+            oferta = triagem.oferta
+    except ErroTriagem as erro:
         st.session_state.oferta = None
         st.session_state.mensagem_analisada = None
         st.session_state.resumo = None
@@ -183,6 +190,14 @@ def analisar_mensagem(texto: str) -> None:
     st.session_state.erro = None
     st.session_state.mensagem_analisada = texto
     st.session_state.oferta = oferta
+    st.session_state.triagem = triagem.para_dict()
+    if triagem.consulta is not None:
+        st.session_state.previa_consulta = {
+            "oferta": deepcopy(oferta),
+            "mensagem": texto,
+            "resultados": deepcopy(triagem.consulta),
+            "realizada_em": datetime.now(timezone.utc).isoformat(),
+        }
     reiniciar_revisao(oferta)
 
 
@@ -196,6 +211,14 @@ def confirmar_revisao() -> None:
         st.session_state.resumo = None
         return
     st.session_state.resumo = revisado
+    previa = st.session_state.previa_consulta
+    if (
+        not nomes_pendentes(revisado)
+        and previa is not None
+        and previa["oferta"] == revisado
+        and previa["mensagem"] == st.session_state.mensagem_analisada
+    ):
+        st.session_state.consulta = deepcopy(previa)
 
 
 # Os personagens são arquivos locais aprovados no desenvolvimento da marca.
@@ -394,7 +417,8 @@ def main() -> None:
         imagem_personagem("pratinho-boas-vindas-final.png", "Pratinho acenando em boas-vindas", 210)
     st.markdown(
         '<div class="nota-demo">Demonstração com dados fictícios · '
-        'A mensagem é enviada ao Gemini para análise. Ao clicar em Registrar oferta, '
+        'A mensagem, os dados extraídos e a prévia da consulta fictícia são enviados '
+        'ao Gemini durante a triagem. Ao clicar em Registrar oferta, '
         'os dados revisados são enviados ao n8n e salvos no Google Sheets. '
         'A mensagem original não é incluída nesse registro.</div>',
         unsafe_allow_html=True,
@@ -414,7 +438,7 @@ def main() -> None:
             st.subheader("1. Conte o que está disponível")
         with exemplo:
             st.button("Usar exemplo", on_click=carregar_exemplo, use_container_width=True)
-        st.caption("Informe alimento, quantidade, bairro, data e intervalo para retirada. Vamos identificar o que faltar.")
+        st.caption("Informe alimento, quantidade, bairro, data e intervalo para retirada. O agente identifica pendências e, se os dados estiverem completos, prepara uma prévia de compatibilidade.")
         st.text_area(
             "Mensagem do restaurante", key="mensagem", height=125,
             placeholder="Ex.: temos 25 unidades de pão na Vila Mariana…",
@@ -441,6 +465,23 @@ def main() -> None:
     if oferta is not None:
         if mensagem_mudou:
             st.warning("A mensagem mudou. Clique em Analisar mensagem para atualizar os dados. A confirmação está bloqueada.")
+        triagem = st.session_state.triagem
+        if triagem is not None and not mensagem_mudou:
+            with st.container(border=True, key="triagem_agente"):
+                st.subheader("Triagem do agente")
+                st.caption("Resultado da mensagem analisada. Confira e complete os campos na revisão abaixo.")
+                if triagem["perguntas"]:
+                    st.info("O agente precisa de mais informações:")
+                    for pergunta in triagem["perguntas"]:
+                        st.write("• " + pergunta)
+                elif st.session_state.previa_consulta is not None:
+                    st.info("O agente preparou uma prévia de compatibilidade. Confirme a revisão para conferir o resultado.")
+                st.caption("A triagem não confirma a revisão e não registra a oferta.")
+                with st.expander("Como a triagem foi feita"):
+                    nomes = {"extrair_oferta": "Extração dos dados e verificação de pendências",
+                             "consultar_organizacoes": "Consulta ao cadastro fictício de organizações"}
+                    for ferramenta in dict.fromkeys(triagem["ferramentas"]):
+                        st.write("✓ " + nomes.get(ferramenta, "Etapa de triagem"))
         original, revisao = st.columns([1, 1.35], gap="large")
         with original:
             with st.container(border=True, key="dados"):
@@ -523,6 +564,9 @@ def main() -> None:
                         st.subheader("3. Encontre o próximo elo da rede")
                         st.write("Consulte organizações fictícias por alimento, bairro, capacidade e disponibilidade.")
                         st.caption("A consulta é uma sugestão para avaliação humana. Não envia mensagens nem reserva capacidade.")
+                        previa = st.session_state.previa_consulta
+                        if previa is not None and previa["oferta"] != resumo:
+                            st.caption("Você alterou os dados da oferta. Consulte novamente para avaliar a versão revisada.")
                         if st.button("Consultar organizações", type="primary"):
                             st.session_state.consulta = None
                             try:
