@@ -236,6 +236,23 @@ def imagem_personagem(nome: str, descricao: str, largura: int) -> None:
         st.caption(f"Ilustração indisponível: {nome}")
 
 
+def exibir_rodape() -> None:
+    caminho = ILUSTRACOES / "fluxo-mesa-em-rede.png"
+    if caminho.is_file():
+        conteudo = base64.b64encode(caminho.read_bytes()).decode("ascii")
+        st.markdown(
+            '<footer class="fluxo-rodape">'
+            f'<img src="data:image/png;base64,{conteudo}" '
+            'alt="Fluxo ilustrativo: restaurante, pessoa revisando a oferta, '
+            'organização receptora e uma refeição." />'
+            '<p>Restaurante · Triagem com revisão humana · Organização receptora</p>'
+            '</footer>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.caption("Restaurante · Triagem com revisão humana · Organização receptora")
+
+
 def aplicar_estilo() -> None:
     st.markdown(
         """
@@ -270,8 +287,9 @@ def aplicar_estilo() -> None:
         .st-key-entrada, .st-key-dados, .st-key-revisao, .st-key-resumo, .st-key-proximo { background: #FFFFFF; border-radius: 20px; }
         div[data-testid="stTextArea"] textarea, div[data-testid="stTextInput"] input { border-radius: 10px; }
         div.stButton > button { border-radius: 10px; min-height: 42px; font-weight: 650; }
-        .rede { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; font-size:.73rem; color:#65766d; padding-top:24px; }
-        .rede i { background:#AD4D35; width:6px; height:6px; border-radius:50%; display:inline-block; }
+        .fluxo-rodape { margin-top: 2.5rem; padding: 1.5rem 0 .5rem; border-top: 1px solid #e7dfd0; text-align: center; }
+        .fluxo-rodape img { display: block; width: 100%; max-width: 692px; height: auto; margin: 0 auto; }
+        .fluxo-rodape p { color: #65766d; font-size: .75rem; margin: .8rem 0 0; }
         @media (max-width: 640px) {
             .block-container { padding-top: 4.5rem; padding-left: 1rem; padding-right: 1rem; }
             .etapas { gap: 6px; }
@@ -392,6 +410,7 @@ def main() -> None:
     pagina = st.sidebar.radio("Navegação", ["Triagem da oferta", "Painel de indicadores"], key="pagina")
     if pagina == "Painel de indicadores":
         exibir_painel(PASTA)
+        exibir_rodape()
         return
 
     # O símbolo é HTML/SVG estático, com fundo transparente.
@@ -647,11 +666,7 @@ def main() -> None:
         ativa = 2
     with etapas.container():
         exibir_etapas(ativa, completa)
-    st.markdown(
-        '<div class="rede"><span>Restaurante</span><i></i><span>Triagem humana</span>'
-        '<i></i><span>Organização receptora</span></div>',
-        unsafe_allow_html=True,
-    )
+    exibir_rodape()
 
 
 if __name__ == "__main__":
