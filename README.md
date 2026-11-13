@@ -250,6 +250,18 @@ O símbolo B2 conecta restaurante, pessoa responsável pela triagem e organizaç
 receptora. Verde escuro `#234539`, creme `#FFF7EB` e terracota `#AD4D35` compõem
 a identidade. O Pratinho, o caminhão e o rodapé ilustram o fluxo.
 
+### Pessoas que fazem a rede acontecer
+
+![Personagens do Mesa em Rede: uma profissional de restaurante preparando alimentos, uma pessoa responsável pela triagem, um transportador com bicicleta e uma representante de organização receptora. O Pratinho identifica as sacolas.](brand/exportacoes/personagens-mesa-em-rede.png)
+
+Os personagens representam os papéis da rede proposta: restaurante, triagem,
+transporte e organização receptora. O Pratinho aparece nas sacolas como assinatura
+visual da marca. A ilustração foi criada com apoio de IA e revisada pela autora.
+
+É uma representação da visão do projeto. A operação de transporte, as parcerias
+com organizações reais e o atendimento às famílias são etapas futuras; a demonstração
+atual utiliza dados fictícios e não confirma entregas.
+
 **Amanda Carvalho Teixeira** — concepção, decisões de escopo e identidade,
 configuração dos serviços e conferência dos resultados, com apoio de ferramentas
 de IA documentado em [AI_USAGE.md](AI_USAGE.md).
